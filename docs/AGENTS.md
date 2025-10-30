@@ -32,19 +32,19 @@ SyncKaro/
 
 | Module | Framework | Styling | State Management |
 |--------|-----------|---------|------------------|
-| **Admin** | Next.js 14+ (App Router) | TailwindCSS + Headless UI* | Local Storage (for now) |
-| **Teacher** | Next.js 14+ (App Router) | TailwindCSS + Headless UI* | Local Storage (for now) |
+| **Admin** | Next.js 14+ (App Router) | Pure TailwindCSS (Refined Premium) | Local Storage (for now) |
+| **Teacher** | Next.js 14+ (App Router) | Pure TailwindCSS (Refined Premium) | Local Storage (for now) |
 | **Student** | React Native Expo | Nativewind | Local Storage (for now) |
 
-**Note:** Headless UI will be tested in Admin first. May switch to other library or custom components if needed.
+**Note:** Using pure TailwindCSS with custom components for full control and professional "Refined Premium" design system.
 
 ### Key Technologies
 - **TypeScript**: Strictly typed across all apps
 - **Axios**: HTTP client with interceptors for API calls
 - **localStorage**: Client-side storage for local-first approach
-- **Headless UI**: Accessible, unstyled components (trial phase)
+- **Pure TailwindCSS**: Custom components with professional color system
 - **Heroicons**: Icon library from Tailwind creators (includes Rupee icons for India)
-- **TailwindCSS**: Utility-first CSS framework
+- **Refined Premium Design**: Professional UI suitable for financial/trading platforms
 
 ### State Management (Future Implementation)
 - **TanStack Query** or **Zustand** will be evaluated and implemented during actual API integration
@@ -424,112 +424,119 @@ screens/
 2. **Gmail-style Lists**: Bulk selection, action menus, clean layout
 3. **Responsive**: Desktop (1024px+) and Tablet (768px+) ONLY for Admin/Teacher - Show blocking UI on mobile (<768px)
 4. **Native Mobile**: Student app is React Native Expo (native mobile app, not responsive web)
-5. **Accessibility**: Use Headless UI for accessible components
-6. **Modern & Clean**: Professional trading dashboard aesthetic
+5. **Accessibility**: Custom accessible components with ARIA labels and keyboard navigation
+6. **Modern & Clean**: Professional trading dashboard aesthetic with "Refined Premium" design
 7. **Component-Based Architecture**: Build reusable components - one change updates all consumers
+8. **Real-World Colors**: Softer, professional palette inspired by Zerodha, Upstox, Bloomberg Terminal
 
 ### Component Library Strategy
 
-**Headless UI Components (Trial Phase - Admin First):**
-- **Dialog/Modal**: For confirmations, forms, details
-- **Menu/Dropdown**: For action menus, filters
-- **Listbox/Select**: For dropdowns in forms
-- **Switch/Toggle**: For active/inactive status
-- **Combobox**: For stock search autocomplete
-- **Tab**: For navigation between sections
-- **Disclosure**: For expandable sections
+**Pure TailwindCSS Custom Components:**
+- **Modal/ConfirmDialog**: Confirmations, forms, details with React Portal
+- **Dropdown**: Action menus, filters with click-outside-to-close
+- **Toggle**: Active/inactive status switches
+- **Button**: All variants (primary, secondary, danger, success, ghost)
+- **Input**: Form inputs with validation states
+- **StatusBadge**: Color-coded status indicators
+- **Table**: Data tables with sorting, pagination
+- **SearchBar**: Search inputs with icons
+- **BulkActionBar**: Bottom sheet for bulk operations
+- **EmptyState**: No-data placeholders
+- **Pagination**: Page navigation controls
 
-**Note:** Headless UI is being tested. If not suitable, will switch to alternative library or build custom components.
-
-**Build Custom When:**
-- Specific table layouts (teacher/student lists)
-- Bulk selection checkboxes
-- Trading interface elements
-- Charts and graphs (use recharts or similar)
+**Component Features:**
+- **Accessibility**: ARIA labels, keyboard navigation, focus management
+- **Animations**: Smooth transitions with TailwindCSS utilities
+- **Click Outside**: Dropdown and modal close on outside click
+- **Escape Key**: Close modals and dropdowns with Escape
+- **Focus Trap**: Keep focus within modals
+- **Professional Colors**: Refined Premium color palette throughout
 
 ### Figma Design Reference
 - **Client has provided UI designs in Figma**
-- Screenshots will be placed in admin folder: `synckaro_admin_nextjs/design-reference/`
-- Use Figma for layout positions and component placement
-- Implement using TailwindCSS + Headless UI (or chosen library)
-- Follow designer's UI/UX patterns and best practices
-- Maintain layout structure from Figma to meet client expectations
+- Screenshots placed in admin folder: `synckaro_admin_reactjs/design-reference/`
+- **Important**: Use Figma for layout positions and feature identification ONLY
+- **DO NOT** copy Figma UI pixel-perfectly
+- **DO** implement using Pure TailwindCSS with Refined Premium design system
+- Follow modern UI/UX industry standards and best practices
+- Build professional, trading-platform-quality UI
+- Maintain functional layout structure while improving aesthetics
 
-### Color Scheme (Suggestion - Modify as Needed)
+### Professional Color System (Refined Premium)
 
-```javascript
-// tailwind.config.js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        // Primary (Blue)
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-        },
-        // Success (Green)
-        success: {
-          500: '#10b981',
-          600: '#059669',
-        },
-        // Danger (Red)
-        danger: {
-          500: '#ef4444',
-          600: '#dc2626',
-        },
-        // Warning (Yellow)
-        warning: {
-          500: '#f59e0b',
-          600: '#d97706',
-        },
-        // Neutral (Gray)
-        neutral: {
-          50: '#f9fafb',
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          500: '#6b7280',
-          900: '#111827',
-        },
-      },
-    },
-  },
-};
+**Implemented in** `app/globals.css` using TailwindCSS v4's `@theme` directive:
+
+```css
+/* Primary - Professional Blue (not too bright) */
+--color-primary-600: #2563eb;  /* Main brand color */
+--color-primary-700: #1d4ed8;  /* Hover states */
+
+/* Success - Softer Green (profits, active states) */
+--color-success-600: #16a34a;  /* Main success */
+--color-success-700: #15803d;  /* Darker variant */
+
+/* Danger - Softer Red (losses, warnings) */
+--color-danger-500: #ef4444;   /* Main danger */
+--color-danger-600: #dc2626;   /* Darker variant */
+
+/* Warning - Softer Yellow/Orange (pending states) */
+--color-warning-600: #d97706;  /* Main warning */
+
+/* Neutral - Professional Grays (text, backgrounds) */
+--color-neutral-50: #fafafa;   /* Page background */
+--color-neutral-100: #f5f5f5;  /* Card backgrounds */
+--color-neutral-200: #e5e5e5;  /* Borders */
+--color-neutral-500: #737373;  /* Secondary text */
+--color-neutral-700: #404040;  /* Primary text (not pure black!) */
 ```
 
-### Component Patterns
+**Color Usage Guidelines:**
+- Use `primary-600` for brand elements (not 500 - too bright)
+- Use `success-600` for profits/active states
+- Use `danger-500` for losses/warnings
+- Use `neutral-700` for main text (not pure black - easier on eyes)
+- Use `neutral-500` for secondary text
+- Avoid harsh, bright colors - keep it professional
 
-**Action Menu (Headless UI Menu):**
+**See** `docs/COLOR_SYSTEM.md` for complete color documentation.
+
+### Component Patterns (Pure TailwindCSS)
+
+**Dropdown (replaces Menu):**
 ```tsx
-<Menu as="div" className="relative">
-  <Menu.Button>
-    <EllipsisVerticalIcon className="h-5 w-5" />
-  </Menu.Button>
-  <Menu.Items className="absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg">
-    <Menu.Item>
-      {({ active }) => (
-        <button className={`${active ? 'bg-blue-500 text-white' : 'text-gray-900'} ...`}>
-          View Details
-        </button>
-      )}
-    </Menu.Item>
-    {/* More items */}
-  </Menu.Items>
-</Menu>
+import { Dropdown } from '@/components/common/Dropdown';
+
+<Dropdown
+  items={[
+    { label: 'View Details', icon: <EyeIcon />, onClick: handleView },
+    { label: 'Delete', icon: <TrashIcon />, onClick: handleDelete, danger: true },
+  ]}
+/>
+```
+
+**Modal/ConfirmDialog:**
+```tsx
+import { ConfirmDialog } from '@/components/common/Modal';
+
+<ConfirmDialog
+  open={isOpen}
+  onClose={() => setIsOpen(false)}
+  onConfirm={handleConfirm}
+  title="Delete Teacher"
+  message="Are you sure? This action cannot be undone."
+  danger
+/>
 ```
 
 **Status Toggle:**
 ```tsx
-<Switch
-  checked={isActive}
-  onChange={handleToggle}
-  className={`${isActive ? 'bg-green-500' : 'bg-gray-300'} relative inline-flex h-6 w-11 items-center rounded-full`}
->
-  <span className={`${isActive ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`} />
-</Switch>
+import { Toggle } from '@/components/common/Toggle';
+
+<Toggle
+  enabled={isActive}
+  onChange={setIsActive}
+  label="Active Status"
+/>
 ```
 
 **Bulk Selection Checkbox:**
@@ -538,8 +545,16 @@ module.exports = {
   type="checkbox"
   checked={isSelected}
   onChange={handleSelect}
-  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+  className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
 />
+```
+
+**Status Badge:**
+```tsx
+import { StatusBadge } from '@/components/common/StatusBadge';
+
+<StatusBadge status="active" />  {/* Green */}
+<StatusBadge status="inactive" /> {/* Gray */}
 ```
 
 ---
@@ -614,26 +629,26 @@ synckaro_admin_nextjs/  (or synckaro_teacher_nextjs/)
 │   ├── layout/
 │   │   ├── Sidebar.tsx
 │   │   ├── Header.tsx
-│   │   └── Footer.tsx
-│   ├── teachers/
-│   │   ├── TeacherTable.tsx
-│   │   ├── TeacherRow.tsx
-│   │   └── TeacherStats.tsx
-│   ├── students/
-│   │   ├── StudentTable.tsx
-│   │   ├── StudentRow.tsx
-│   │   └── StudentForm.tsx
-│   ├── common/
+│   │   ├── Logo.tsx
+│   │   ├── MobileBlocker.tsx
+│   │   └── DashboardLayout.tsx
+│   ├── common/               # Pure TailwindCSS components
 │   │   ├── Button.tsx
 │   │   ├── Input.tsx
-│   │   ├── Modal.tsx
+│   │   ├── Modal.tsx         # Replaces Headless UI Dialog
+│   │   ├── Dropdown.tsx      # Replaces Headless UI Menu
+│   │   ├── Toggle.tsx        # Replaces Headless UI Switch
 │   │   ├── Table.tsx
-│   │   ├── BulkActions.tsx
-│   │   ├── ActionMenu.tsx
-│   │   └── StatusBadge.tsx
-│   └── forms/
-│       ├── StudentForm.tsx
-│       └── BrokerForm.tsx
+│   │   ├── Pagination.tsx
+│   │   ├── SearchBar.tsx
+│   │   ├── StatusBadge.tsx
+│   │   ├── BulkActionBar.tsx
+│   │   └── EmptyState.tsx
+│   ├── auth/
+│   │   ├── ProtectedRoute.tsx
+│   │   └── OTPInput.tsx
+│   └── providers/
+│       └── SeedDataProvider.tsx
 ├── hooks/
 │   ├── useLocalStorage.ts          # localStorage hook
 │   └── useDebounce.ts
@@ -955,19 +970,20 @@ export default function AdminLayout({ children }) {
 
 ### Phase 1: Admin App (Current Priority)
 1. ✅ Initialize Next.js app with TypeScript, TailwindCSS
-2. ✅ Setup Headless UI (trial phase), Heroicons
+2. ✅ Setup Pure TailwindCSS color system (Refined Premium)
 3. ✅ Setup Axios client with interceptors (prepared for future)
 4. ✅ Create localStorage utilities and services
 5. ✅ Create Figma design reference folder
-6. ✅ Build authentication (mobile + OTP) with localStorage
-7. ✅ Implement protected routes (industry standard)
-8. ✅ Create layout components (Sidebar, Header) - reference Figma
-9. ✅ Build Teacher list page (Gmail-style UI) - reference Figma
-10. ✅ Implement Teacher details page
-11. ✅ Create Stats page (assumed fields - not discussed with client)
-12. ✅ Create Logs page (dummy trade history data)
-13. ✅ Test all features thoroughly
-14. ✅ Ensure dummy admin login works (9999999999 / 1234)
+6. ✅ Build pure TailwindCSS custom components (Dropdown, Modal, Toggle)
+7. ✅ Build authentication (mobile + OTP) with localStorage
+8. ✅ Implement protected routes (industry standard)
+9. ✅ Create layout components (Sidebar, Header, DashboardLayout)
+10. ✅ Build Teacher list page (Gmail-style UI, professional design)
+11. ✅ Implement Teacher details page (Refined Premium design)
+12. ✅ Create Stats page (with dummy data)
+13. ✅ Create Logs page (with dummy trade history)
+14. ✅ Test all features thoroughly
+15. ✅ Ensure dummy admin login works (9999999999 / 1234)
 
 ### Phase 2: Teacher App
 1. Copy entire Admin app to `synckaro_teacher_nextjs/`
@@ -1297,14 +1313,16 @@ components/
 - Use `queryClient.invalidateQueries()` after mutations
 - Verify query keys are consistent
 
-**Headless UI components not styled:**
-- Headless UI provides zero styling - add TailwindCSS classes
-- Check component examples in Headless UI docs
+**Custom components not working:**
+- Verify click-outside listeners are properly attached
+- Check React Portal is rendering for modals
+- Ensure focus trap is working in modals
+- Test keyboard navigation (Escape, Tab)
 
 **Bulk selection not working:**
 - Verify checkbox state management in parent component
-- Use Zustand store for selected items
 - Ensure unique IDs for each item
+- Check selectedIds array is updating correctly
 
 **API calls failing:**
 - Check API base URL in `.env.local`
@@ -1323,20 +1341,21 @@ components/
 
 ### Documentation Links
 - [Next.js Docs](https://nextjs.org/docs)
-- [TailwindCSS Docs](https://tailwindcss.com/docs)
-- [Headless UI](https://headlessui.com/)
+- [TailwindCSS v4 Docs](https://tailwindcss.com/docs)
 - [TanStack Query](https://tanstack.com/query/latest)
 - [Zustand](https://github.com/pmndrs/zustand)
 - [React Native Expo](https://docs.expo.dev/)
 - [Nativewind](https://www.nativewind.dev/)
+- [Heroicons](https://heroicons.com/)
 
 ### Design Inspiration
-- **Figma designs from client** (primary reference - screenshots in design-reference folder)
+- **Figma designs from client** (layout reference only - in design-reference folder)
+- **Zerodha Kite** - Clean professional trading UI
+- **Upstox Pro** - Modern trading platform aesthetics
+- **Interactive Brokers** - Conservative professional design
+- **Bloomberg Terminal** - Data-heavy professional interface
 - Gmail inbox UI (for list views and bulk actions)
-- https://dhanhq.co/ (for reference - mobile blocking concept)
-- Modern trading dashboards
-- Clean admin panels
-- Follow Figma layout positions while using TailwindCSS + Headless UI for implementation
+- Follow Figma for layout structure, implement with Refined Premium design system
 
 ---
 
@@ -1363,27 +1382,30 @@ components/
 ## ⚠️ Important Notes for AI Agents
 
 1. **Always read this file first** before making any changes
-2. **Admin app is top priority** - start here
-3. **Local-first approach** - use localStorage, NO TanStack Query or Zustand yet
-4. **Figma designs are primary reference** - follow layout positions
-5. **Authentication is mobile + OTP** - admin dummy: 9999999999 / 1234
-6. **Protected routes** - implement with industry best practices
-7. **Teachers self-onboard** - admin cannot create teachers
-8. **Admin & Teacher apps are desktop/tablet only (≥768px)** - show blocking UI on mobile
-9. **Zombie students** are unassociated - important concept
-10. **Headless UI on trial** - may switch to other library or custom components
-11. **Gmail-style UI** - bulk selection, clean lists, action menus
-12. **Stats page** - create UI with assumed fields (not discussed with client)
-13. **Logs page** - show dummy trade history data
-14. **Panic button** - critical safety feature for teachers
-15. **Connection requests** - complex logic, follow rules carefully
-16. **Axios client ready** - prepared with interceptors but use localStorage for now
-17. **No file size limits** - keep code logical and readable
-18. **Heroicons** - use for all icons (includes Rupee icons)
-19. **No emojis in production code** - keep it professional
-20. **Component-based architecture** - build reusable components, change once update everywhere
-21. **TypeScript strictly** - no `any` types
-22. **Test thoroughly** - especially bulk operations and trading features
+2. **Pure TailwindCSS ONLY** - NO Headless UI, custom components with Refined Premium design
+3. **Admin app is top priority** - start here
+4. **Local-first approach** - use localStorage, NO TanStack Query or Zustand yet
+5. **Figma for layout reference ONLY** - DO NOT copy UI exactly, use Refined Premium design
+6. **Professional color palette** - See COLOR_SYSTEM.md, softer colors for trading platform
+7. **Authentication is mobile + OTP** - admin dummy: 9999999999 / 1234
+8. **Protected routes** - implement with industry best practices
+9. **Teachers self-onboard** - admin cannot create teachers
+10. **Admin & Teacher apps are desktop/tablet only (≥768px)** - show blocking UI on mobile
+11. **Zombie students** are unassociated - important concept
+12. **Gmail-style UI** - bulk selection, clean lists, action menus
+13. **Stats page** - create UI with assumed fields (not discussed with client)
+14. **Logs page** - show dummy trade history data
+15. **Panic button** - critical safety feature for teachers
+16. **Connection requests** - complex logic, follow rules carefully
+17. **Axios client ready** - prepared with interceptors but use localStorage for now
+18. **No file size limits** - keep code logical and readable
+19. **Heroicons** - use for all icons (includes Rupee icons)
+20. **No emojis in production code** - keep it professional
+21. **Component-based architecture** - build reusable components, change once update everywhere
+22. **TypeScript strictly** - no `any` types
+23. **Real-world colors** - text-neutral-700 (not black), softer greens/reds, professional palette
+24. **Refined Premium UI** - Clean, professional, functional - not over-fancy
+25. **Test thoroughly** - especially bulk operations and trading features
 
 ---
 
