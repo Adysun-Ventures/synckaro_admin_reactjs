@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeftIcon, TrendingUpIcon, TrendingDownIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/common/Table';
@@ -125,7 +125,7 @@ export default function TeacherStatsPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-neutral-600">Total Trades</h3>
               <div className="bg-primary-100 p-2 rounded-lg">
-                <TrendingUpIcon className="h-5 w-5 text-primary-600" />
+                <ArrowTrendingUpIcon className="h-5 w-5 text-primary-600" />
               </div>
             </div>
             <p className="text-3xl font-semibold text-neutral-900">{totalTrades}</p>
@@ -141,7 +141,7 @@ export default function TeacherStatsPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-neutral-600">Win Rate</h3>
               <div className="bg-success-100 p-2 rounded-lg">
-                <TrendingUpIcon className="h-5 w-5 text-success-600" />
+                <ArrowTrendingUpIcon className="h-5 w-5 text-success-600" />
               </div>
             </div>
             <p className="text-3xl font-semibold text-neutral-900">{winRate.toFixed(1)}%</p>
@@ -161,9 +161,9 @@ export default function TeacherStatsPage() {
                 totalPnL >= 0 ? 'bg-success-100' : 'bg-danger-100'
               )}>
                 {totalPnL >= 0 ? (
-                  <TrendingUpIcon className="h-5 w-5 text-success-600" />
+                  <ArrowTrendingUpIcon className="h-5 w-5 text-success-600" />
                 ) : (
-                  <TrendingDownIcon className="h-5 w-5 text-danger-600" />
+                  <ArrowTrendingUpIcon className="h-5 w-5 text-danger-600" />
                 )}
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function TeacherStatsPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-neutral-600">Active Students</h3>
               <div className="bg-warning-100 p-2 rounded-lg">
-                <TrendingUpIcon className="h-5 w-5 text-warning-600" />
+                <ArrowTrendingUpIcon className="h-5 w-5 text-warning-600" />
               </div>
             </div>
             <p className="text-3xl font-semibold text-neutral-900">{activeStudents}</p>
