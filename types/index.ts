@@ -29,11 +29,14 @@ export interface Teacher {
   name: string;
   email: string;
   mobile: string;
+  phone?: string;
   status: 'active' | 'inactive';
   totalStudents: number;
   totalTrades: number;
   totalCapital?: number;
   profitLoss?: number;
+  winRate?: number;
+  specialization?: string;
   joinedDate: string;
 }
 
@@ -69,6 +72,8 @@ export interface Trade {
   status: 'pending' | 'executed' | 'failed';
   executedAt?: string;
   createdAt: string;
+  timestamp?: string;
+  pnl?: number;
 }
 
 // Broker Types

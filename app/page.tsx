@@ -2,9 +2,10 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserGroupIcon, AcademicCapIcon, ChartBarIcon, BoltIcon } from '@heroicons/react/24/outline';
+import { UserGroupIcon, AcademicCapIcon, ChartBarIcon, BoltIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { isAuthenticated, getCurrentUser } from '@/services/authService';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function DashboardPage() {
     {
       name: 'Total Teachers',
       value: '24',
+      change: 12,
       icon: AcademicCapIcon,
       bgColor: 'bg-primary-100',
       iconColor: 'text-primary-600',
@@ -31,6 +33,7 @@ export default function DashboardPage() {
     {
       name: 'Total Students',
       value: '542',
+      change: 8,
       icon: UserGroupIcon,
       bgColor: 'bg-success-100',
       iconColor: 'text-success-600',
@@ -38,6 +41,7 @@ export default function DashboardPage() {
     {
       name: 'Total Trades',
       value: '1,247',
+      change: -3,
       icon: ChartBarIcon,
       bgColor: 'bg-warning-100',
       iconColor: 'text-warning-600',
@@ -45,6 +49,7 @@ export default function DashboardPage() {
     {
       name: 'Active Users',
       value: '489',
+      change: 5,
       icon: BoltIcon,
       bgColor: 'bg-danger-100',
       iconColor: 'text-danger-600',
@@ -73,6 +78,18 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${stat.bgColor}`}>
                 <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
+              </div>
+              {/* Percentage Change Indicator */}
+              <div className={cn(
+                'flex items-center gap-1 text-sm font-medium',
+                stat.change >= 0 ? 'text-success-600' : 'text-danger-600'
+              )}>
+                {stat.change >= 0 ? (
+                  <ArrowTrendingUpIcon className="h-4 w-4" />
+                ) : (
+                  <ArrowTrendingDownIcon className="h-4 w-4" />
+                )}
+                <span>{Math.abs(stat.change)}%</span>
               </div>
             </div>
             <p className="text-sm text-neutral-500 mb-1">{stat.name}</p>

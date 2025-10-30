@@ -8,10 +8,10 @@ interface StatusBadgeProps {
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   const statusStyles = {
-    active: 'bg-success-100 text-success-700 border-success-200',
-    inactive: 'bg-neutral-100 text-neutral-700 border-neutral-200',
-    pending: 'bg-warning-100 text-warning-700 border-warning-200',
-    error: 'bg-danger-100 text-danger-700 border-danger-200',
+    active: 'bg-success-100 text-success-800 border-success-200',
+    inactive: 'bg-neutral-100 text-neutral-800 border-neutral-200',
+    pending: 'bg-warning-100 text-warning-800 border-warning-200',
+    error: 'bg-danger-100 text-danger-800 border-danger-200',
   };
   
   const statusLabels = {
