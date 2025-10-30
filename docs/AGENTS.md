@@ -406,12 +406,14 @@ screens/
     └── CompareWithTeacher.tsx
 ```
 
-#### Mobile-First Considerations
+#### Native Mobile App Considerations
 - Use existing Expo boilerplate (separate directory)
 - Update `app.json`: slug → "synckaro-student", identifier
 - Nativewind already configured
 - Basic layout: Header, Footer, Sidebar
-- Focus on touch-friendly UI (minimum 44px touch targets)
+- Touch-friendly UI (minimum 44px touch targets)
+- Native navigation patterns
+- Platform-specific components (iOS/Android)
 
 ---
 
@@ -420,9 +422,11 @@ screens/
 ### Design Principles
 1. **Consistency**: Admin and Teacher apps must have identical UI patterns
 2. **Gmail-style Lists**: Bulk selection, action menus, clean layout
-3. **Responsive**: Desktop-first for Admin/Teacher, Mobile-first for Student
-4. **Accessibility**: Use Headless UI for accessible components
-5. **Modern & Clean**: Professional trading dashboard aesthetic
+3. **Responsive**: Desktop (1024px+) and Tablet (768px+) ONLY for Admin/Teacher - Show blocking UI on mobile (<768px)
+4. **Native Mobile**: Student app is React Native Expo (native mobile app, not responsive web)
+5. **Accessibility**: Use Headless UI for accessible components
+6. **Modern & Clean**: Professional trading dashboard aesthetic
+7. **Component-Based Architecture**: Build reusable components - one change updates all consumers
 
 ### Component Library Strategy
 
@@ -1127,6 +1131,139 @@ export async function getTeachers(page: number, search?: string) {
 
 ---
 
+## 🧩 Component-Based Architecture
+
+### Core Principle
+**Build reusable components once, use everywhere. One change updates all instances automatically.**
+
+### Component Guidelines
+
+#### 1. **Build Reusable Components**
+Create common components that can be used across the application:
+- `Button` - All button variations (primary, secondary, danger, etc.)
+- `Input` - All input types (text, email, number, etc.)
+- `Card` - Content containers
+- `Table` - Data tables with sorting, pagination
+- `Modal` - Dialogs and confirmations
+- `Badge` - Status indicators
+- `Dropdown` - Select menus
+- `Checkbox` - Checkboxes with proper states
+- `Toggle` - Switch components
+
+#### 2. **Single Source of Truth**
+- One component file, used everywhere
+- Example: Create `Button.tsx` once → use in forms, headers, tables, modals
+- Update `Button` styling → all buttons across the app update automatically
+- Add loading state to `Button` → all instances inherit the feature
+
+#### 3. **Props-Driven Flexibility**
+Make components flexible with props:
+```typescript
+// components/common/Button.tsx
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  icon?: React.ReactNode;
+  onClick?: () => void;
+  children: React.ReactNode;
+}
+
+export function Button({ 
+  variant = 'primary', 
+  size = 'md', 
+  loading = false,
+  ...props 
+}: ButtonProps) {
+  // Implementation
+}
+```
+
+**Usage:**
+```typescript
+<Button variant="primary" size="lg" loading={isSubmitting}>
+  Save Changes
+</Button>
+
+<Button variant="danger" size="sm" icon={<TrashIcon />}>
+  Delete
+</Button>
+```
+
+#### 4. **Composition Pattern**
+Build complex UIs by composing simple components:
+```typescript
+// Complex form built from simple components
+<Card>
+  <Card.Header>
+    <Heading>Create Teacher</Heading>
+  </Card.Header>
+  <Card.Body>
+    <Form>
+      <Input label="Name" />
+      <Input label="Email" type="email" />
+      <Button variant="primary">Submit</Button>
+    </Form>
+  </Card.Body>
+</Card>
+```
+
+#### 5. **Consistent Behavior**
+- All buttons have same hover/active/disabled states
+- All inputs have same validation styling
+- All modals have same transition/backdrop
+- All tables have same sorting/pagination UI
+
+#### 6. **Component Structure**
+```
+components/
+├── common/              # Shared across entire app
+│   ├── Button.tsx
+│   ├── Input.tsx
+│   ├── Card.tsx
+│   ├── Modal.tsx
+│   ├── Table.tsx
+│   ├── Badge.tsx
+│   ├── Dropdown.tsx
+│   └── Toggle.tsx
+├── layout/              # Layout-specific
+│   ├── Sidebar.tsx
+│   ├── Header.tsx
+│   └── Footer.tsx
+└── teachers/            # Feature-specific (composed from common)
+    ├── TeacherTable.tsx    # Uses common/Table
+    ├── TeacherCard.tsx     # Uses common/Card
+    └── TeacherForm.tsx     # Uses common/Input, Button
+```
+
+#### 7. **Benefits**
+- **Consistency**: Same look and feel everywhere
+- **Maintainability**: Change once, update everywhere
+- **Development Speed**: Reuse instead of rebuild
+- **Bug Fixes**: Fix in one place, fixed everywhere
+- **Easy Refactoring**: Update component API, all uses update
+- **Testing**: Test component once, confident everywhere
+
+#### 8. **Example: Button Component Evolution**
+```typescript
+// Step 1: Create basic button
+<Button>Click Me</Button>
+
+// Step 2: Add loading state to Button component
+// All existing buttons now support loading!
+<Button loading={isLoading}>Click Me</Button>
+
+// Step 3: Add icon support to Button component
+// All existing buttons can now have icons!
+<Button icon={<PlusIcon />}>Add Teacher</Button>
+
+// No need to update existing code - just new features available!
+```
+
+---
+
 ## 🎯 Key Features Priority
 
 ### High Priority (MVP)
@@ -1232,7 +1369,7 @@ export async function getTeachers(page: number, search?: string) {
 5. **Authentication is mobile + OTP** - admin dummy: 9999999999 / 1234
 6. **Protected routes** - implement with industry best practices
 7. **Teachers self-onboard** - admin cannot create teachers
-8. **Teacher app is desktop/tablet only** - implement mobile blocking
+8. **Admin & Teacher apps are desktop/tablet only (≥768px)** - show blocking UI on mobile
 9. **Zombie students** are unassociated - important concept
 10. **Headless UI on trial** - may switch to other library or custom components
 11. **Gmail-style UI** - bulk selection, clean lists, action menus
@@ -1244,8 +1381,9 @@ export async function getTeachers(page: number, search?: string) {
 17. **No file size limits** - keep code logical and readable
 18. **Heroicons** - use for all icons (includes Rupee icons)
 19. **No emojis in production code** - keep it professional
-20. **TypeScript strictly** - no `any` types
-21. **Test thoroughly** - especially bulk operations and trading features
+20. **Component-based architecture** - build reusable components, change once update everywhere
+21. **TypeScript strictly** - no `any` types
+22. **Test thoroughly** - especially bulk operations and trading features
 
 ---
 
