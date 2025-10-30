@@ -177,3 +177,4 @@ Potential future enhancements:
 - Add more interactive elements (inline editing, drag-and-drop)
 - Extend to Student app when implemented
 
+

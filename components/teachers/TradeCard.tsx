@@ -85,3 +85,4 @@ export function TradeCard({ trade }: TradeCardProps) {
   );
 }
 
+

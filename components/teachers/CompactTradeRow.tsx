@@ -8,10 +8,18 @@ interface CompactTradeRowProps {
 export function CompactTradeRow({ trade }: CompactTradeRowProps) {
   const isBuy = trade.type === 'BUY';
   
-  const statusColors = {
-    pending: 'bg-warning-100 text-warning-800 border border-warning-200',
-    executed: 'bg-success-100 text-success-800 border border-success-200',
-    failed: 'bg-danger-100 text-danger-800 border border-danger-200',
+  // Get status color with fallback for unknown statuses
+  const getStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: 'bg-warning-100 text-warning-800 border border-warning-200',
+      executed: 'bg-success-100 text-success-800 border border-success-200',
+      completed: 'bg-success-100 text-success-800 border border-success-200',
+      failed: 'bg-danger-100 text-danger-800 border border-danger-200',
+      cancelled: 'bg-neutral-100 text-neutral-800 border border-neutral-300',
+    };
+    
+    // Fallback for unknown statuses (neutral gray)
+    return colors[status] || 'bg-neutral-100 text-neutral-800 border border-neutral-300';
   };
 
   const formatDate = (dateStr: string) => {
@@ -40,13 +48,13 @@ export function CompactTradeRow({ trade }: CompactTradeRowProps) {
       <div className="w-[60px] flex-shrink-0">
         <span
           className={cn(
-            'inline-block px-2 py-0.5 rounded text-[11px] font-semibold border',
+            'inline-block px-2 py-0.5 rounded text-[11px] font-bold border',
             isBuy
               ? 'bg-success-100 text-success-800 border-success-200'
               : 'bg-danger-100 text-danger-800 border-danger-200'
           )}
         >
-          {trade.type}
+          {trade.type || 'N/A'}
         </span>
       </div>
       
@@ -72,7 +80,7 @@ export function CompactTradeRow({ trade }: CompactTradeRowProps) {
         <span
           className={cn(
             'inline-block px-2 py-0.5 rounded text-[11px] font-medium',
-            statusColors[trade.status]
+            getStatusColor(trade.status)
           )}
         >
           {trade.status}

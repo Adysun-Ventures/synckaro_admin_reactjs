@@ -39,6 +39,7 @@ const stocks = [
 const exchanges = ['NSE', 'BSE'] as const;
 const tradeTypes = ['BUY', 'SELL'] as const;
 const statuses = ['active', 'inactive'] as const;
+const tradeStatuses = ['pending', 'executed', 'completed', 'failed', 'cancelled'] as const;
 
 // Helper functions
 function randomDate(start: Date, end: Date): Date {
@@ -148,8 +149,9 @@ export function generateTrades(teachers: Teacher[], students: Student[]): Trade[
         price,
         type,
         exchange: randomElement(exchanges),
+        createdAt: timestamp.toISOString(),
         timestamp: timestamp.toISOString(),
-        status: 'completed',
+        status: randomElement(tradeStatuses),
         pnl: randomFloat(-5000, 15000),
       });
       
@@ -176,8 +178,9 @@ export function generateTrades(teachers: Teacher[], students: Student[]): Trade[
           price,
           type,
           exchange: randomElement(exchanges),
+          createdAt: timestamp.toISOString(),
           timestamp: timestamp.toISOString(),
-          status: 'completed',
+          status: randomElement(tradeStatuses),
           pnl: randomFloat(-2000, 8000),
         });
         

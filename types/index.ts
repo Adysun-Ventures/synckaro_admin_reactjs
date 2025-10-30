@@ -69,7 +69,7 @@ export interface Trade {
   price?: number;
   type: 'BUY' | 'SELL';
   exchange: 'NSE' | 'BSE';
-  status: 'pending' | 'executed' | 'failed';
+  status: 'pending' | 'executed' | 'completed' | 'failed' | 'cancelled';
   executedAt?: string;
   createdAt: string;
   timestamp?: string;
