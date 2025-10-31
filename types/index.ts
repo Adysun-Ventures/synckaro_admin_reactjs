@@ -30,7 +30,7 @@ export interface Teacher {
   email: string;
   mobile: string;
   phone?: string;
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | 'open' | 'close' | 'live' | 'test';
   totalStudents: number;
   totalTrades: number;
   totalCapital?: number;

@@ -1,13 +1,25 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  type ComponentType,
+  type ComponentProps,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeftIcon,
+  CheckIcon,
   EyeIcon,
   ChartBarIcon,
   DocumentTextIcon,
   TrashIcon,
+  XMarkIcon,
+  PlayIcon,
+  StopIcon,
+  BoltIcon,
+  PauseIcon,
 } from "@heroicons/react/24/outline";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { SearchBar } from "@/components/common/SearchBar";
@@ -38,6 +50,7 @@ export default function TeachersPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkStatusConfirm, setBulkStatusConfirm] = useState<Teacher["status"] | null>(null);
 
   // Check auth
   useEffect(() => {
@@ -77,6 +90,50 @@ export default function TeachersPage() {
     filteredTeachers.length === 0
       ? 0
       : Math.min(currentPage * ITEMS_PER_PAGE, filteredTeachers.length);
+
+  const bulkToolbarStatusActions: Array<{
+    label: string;
+    status: Teacher["status"];
+    icon: ComponentType<ComponentProps<typeof CheckIcon>>;
+    classes: string;
+  }> = [
+    {
+      label: "Active",
+      status: "active",
+      icon: CheckIcon,
+      classes: "bg-green-500/15 text-green-200 hover:bg-green-500/25",
+    },
+    {
+      label: "Inactive",
+      status: "inactive",
+      icon: XMarkIcon,
+      classes: "bg-red-500/15 text-red-200 hover:bg-red-500/25",
+    },
+    {
+      label: "Open",
+      status: "open",
+      icon: PlayIcon,
+      classes: "bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25",
+    },
+    {
+      label: "Close",
+      status: "close",
+      icon: StopIcon,
+      classes: "bg-rose-500/15 text-rose-200 hover:bg-rose-500/25",
+    },
+    {
+      label: "Live",
+      status: "live",
+      icon: BoltIcon,
+      classes: "bg-lime-500/15 text-lime-200 hover:bg-lime-500/25",
+    },
+    {
+      label: "Test",
+      status: "test",
+      icon: PauseIcon,
+      classes: "bg-amber-500/15 text-amber-200 hover:bg-amber-500/25",
+    },
+  ];
 
   // Select all toggle
   const handleSelectAll = () => {
@@ -131,6 +188,35 @@ export default function TeachersPage() {
   // Clear selection
   const handleClearSelection = () => {
     setSelectedIds([]);
+  };
+
+  const applyBulkStatusUpdate = (status: Teacher["status"]) => {
+    if (selectedIds.length === 0) return;
+
+    const updatedTeachers = teachers.map((teacher) =>
+      selectedIds.includes(teacher.id)
+        ? {
+            ...teacher,
+            status,
+          }
+        : teacher
+    );
+
+    setTeachers(updatedTeachers);
+    storage.setItem("teachers", updatedTeachers);
+    setSelectedIds([]);
+    setBulkStatusConfirm(null);
+  };
+
+  const handleBulkStatus = (status: Teacher["status"]) => {
+    if (selectedIds.length === 0) return;
+
+    if (status === "close") {
+      setBulkStatusConfirm(status);
+      return;
+    }
+
+    applyBulkStatusUpdate(status);
   };
 
   if (!isAuthenticated()) {
@@ -301,26 +387,40 @@ export default function TeachersPage() {
 
           {selectedIds.length > 0 && (
             <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4">
-              <div className="pointer-events-auto flex flex-wrap items-center gap-3 rounded-full bg-neutral-900/95 px-5 py-3 text-white shadow-2xl shadow-neutral-900/20 backdrop-blur">
-                <span className="text-sm font-medium">
-                  {selectedIds.length} selected
-                </span>
-                <button
-                  type="button"
-                  onClick={handleClearSelection}
-                  className="text-xs font-medium text-neutral-300 transition-colors hover:text-white"
-                >
-                  Clear
-                </button>
-                <span className="hidden h-4 w-px bg-neutral-700 md:block" />
-                <button
-                  type="button"
-                  onClick={handleBulkDeleteClick}
-                  className="inline-flex items-center gap-1 rounded-full bg-danger-500 px-4 py-2 text-sm font-semibold text-white transition-transform hover:scale-[1.02] hover:bg-danger-500/90"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                  Delete
-                </button>
+              <div className="pointer-events-auto flex flex-col gap-3 rounded-full bg-neutral-900/95 px-5 py-3 text-white shadow-2xl shadow-neutral-900/20 backdrop-blur md:flex-row md:items-center">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium">
+                    {selectedIds.length} selected
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleClearSelection}
+                    className="text-xs font-medium text-neutral-300 transition-colors hover:text-white"
+                  >
+                    Clear
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                  {bulkToolbarStatusActions.map(({ label, status, icon: Icon, classes }) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => handleBulkStatus(status)}
+                      className={`inline-flex items-center gap-1.5 rounded-full border border-white/5 px-3 py-1.5 text-sm font-medium transition-colors ${classes}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={handleBulkDeleteClick}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-danger-500/40 bg-danger-500 px-3 py-1.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] hover:bg-danger-500/90"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -347,6 +447,17 @@ export default function TeachersPage() {
           } teacher${
             selectedIds.length !== 1 ? "s" : ""
           }? This action cannot be undone.`}
+          danger
+        />
+
+        <ConfirmDialog
+          open={bulkStatusConfirm === "close"}
+          onClose={() => setBulkStatusConfirm(null)}
+          onConfirm={() => applyBulkStatusUpdate("close")}
+          title="Mark Teachers as Closed"
+          message={`Are you sure you want to mark ${selectedIds.length} teacher${
+            selectedIds.length !== 1 ? "s" : ""
+          } as closed?`}
           danger
         />
       </div>
