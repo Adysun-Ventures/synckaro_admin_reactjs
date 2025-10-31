@@ -271,3 +271,4 @@ The Recent Trades section now has:
 The transformation successfully delivers on the goal of creating a compact, professional trading UI that matches platforms like Zerodha and Upstox! 🎯
 
 
+
