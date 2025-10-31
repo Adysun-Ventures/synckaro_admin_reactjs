@@ -36,8 +36,8 @@ export function StudentCard({ student, onToggleStatus }: StudentCardProps) {
         aria-label={`View ${student.name}'s profile`}
       />
       <div className="pointer-events-none rounded-xl border border-neutral-200 bg-white p-4 transition-shadow group-hover:shadow-md">
-        <div className="flex items-center gap-4">
-          {/* Avatar */}
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
           <div className="pointer-events-auto">
             <Avatar
               name={student.name}
@@ -46,43 +46,43 @@ export function StudentCard({ student, onToggleStatus }: StudentCardProps) {
               statusColor={isActive ? 'success' : 'danger'}
             />
           </div>
-
-          {/* Student Info */}
+        
+        {/* Student Info */}
           <div className="min-w-0 flex-1">
             <h4 className="truncate font-medium text-neutral-900">{student.name}</h4>
             <p className="truncate text-sm text-neutral-500">{student.email}</p>
-          </div>
-
-          {/* Capital and Risk */}
+        </div>
+        
+        {/* Capital and Risk */}
           <div className="pointer-events-none text-right">
-            <div className="flex items-center gap-2">
-              <div>
-                <p className="text-xs text-neutral-500">Capital</p>
+          <div className="flex items-center gap-2">
+            <div>
+              <p className="text-xs text-neutral-500">Capital</p>
                 <p
                   className={cn(
-                    'text-sm font-semibold',
-                    isPositive ? 'text-success-600' : 'text-danger-600'
+                'text-sm font-semibold',
+                isPositive ? 'text-success-600' : 'text-danger-600'
                   )}
                 >
-                  {formatCurrency(student.currentCapital || 0)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-neutral-500">Risk</p>
-                <p className="text-sm font-medium text-neutral-600">
-                  {student.riskPercentage || 0}%
-                </p>
-              </div>
+                {formatCurrency(student.currentCapital || 0)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-neutral-500">Risk</p>
+              <p className="text-sm font-medium text-neutral-600">
+                {student.riskPercentage || 0}%
+              </p>
             </div>
           </div>
-
-          {/* Toggle */}
+        </div>
+        
+        {/* Toggle */}
           <div className="pointer-events-auto">
-            <Toggle
-              enabled={isActive}
-              onChange={handleToggle}
-              aria-label={`Toggle ${student.name} status`}
-            />
+        <Toggle
+          enabled={isActive}
+          onChange={handleToggle}
+          aria-label={`Toggle ${student.name} status`}
+        />
           </div>
         </div>
       </div>

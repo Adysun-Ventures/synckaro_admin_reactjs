@@ -179,22 +179,22 @@ export default function TeacherDetailsPage() {
                   <h1 className="text-2xl font-bold text-neutral-900">{teacher.name}</h1>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
                     <div className="flex items-center gap-2">
-                      <EnvelopeIcon className="h-4 w-4" />
-                      <span>{teacher.email}</span>
-                    </div>
-                    {teacher.phone && (
+                    <EnvelopeIcon className="h-4 w-4" />
+                    <span>{teacher.email}</span>
+                  </div>
+                  {teacher.phone && (
                       <div className="flex items-center gap-2">
-                        <PhoneIcon className="h-4 w-4" />
-                        <span>{teacher.phone}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4" />
-                      <span>Joined {formatDate(teacher.joinedDate)}</span>
+                      <PhoneIcon className="h-4 w-4" />
+                      <span>{teacher.phone}</span>
                     </div>
+                  )}
+                    <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-4 w-4" />
+                    <span>Joined {formatDate(teacher.joinedDate)}</span>
                   </div>
                 </div>
               </div>
+            </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Link href={`/teachers/${teacherId}/stats`} className="inline-flex">
                   <Button variant="secondary" size="sm">
@@ -204,8 +204,8 @@ export default function TeacherDetailsPage() {
                 </Link>
                 <Button variant="danger" size="sm" onClick={() => setDeleteConfirmOpen(true)}>
                   <TrashIcon className="mr-1 h-4 w-4" />
-                  Delete
-                </Button>
+                Delete
+              </Button>
               </div>
             </>
           }
