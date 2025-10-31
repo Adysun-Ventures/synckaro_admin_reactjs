@@ -57,6 +57,9 @@ export function ConfirmDialog({
     };
   }, [open, onClose]);
 
+  const messageSegments = message.match(/[^.!?]+[.!?]+|\s*[^.!?]+$/g) ?? [];
+  const hasSentencePunctuation = /[.!?]/.test(message);
+
   if (!open) return null;
 
   return createPortal(
@@ -84,13 +87,22 @@ export function ConfirmDialog({
               {title}
             </h3>
             <div className="mt-2">
-              <p className="text-sm text-neutral-500">{message}</p>
+              <p className="text-sm text-neutral-500">
+                {hasSentencePunctuation
+                  ? messageSegments.map((segment, index) => (
+                      <React.Fragment key={index}>
+                        {segment.trim()}
+                        {index < messageSegments.length - 1 && <br />}
+                      </React.Fragment>
+                    ))
+                  : message}
+              </p>
               {children}
             </div>
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end space-x-3">
+        <div className="mt-6 flex w-full items-center justify-between">
           <Button variant="secondary" onClick={onClose} disabled={loading}>
             {cancelLabel}
           </Button>
