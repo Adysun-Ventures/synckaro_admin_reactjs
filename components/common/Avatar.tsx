@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 
 interface AvatarProps {
   name: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | '2xl';
   className?: string;
   showStatus?: boolean;
   statusColor?: 'success' | 'danger' | 'warning';
@@ -46,6 +46,7 @@ export function Avatar({ name, size = 'md', className, showStatus, statusColor =
     sm: 'h-8 w-8 text-xs',
     md: 'h-12 w-12 text-sm',
     lg: 'h-16 w-16 text-xl',
+    '2xl': 'h-20 w-20 text-2xl',
   };
   
   const statusColors = {
@@ -58,6 +59,7 @@ export function Avatar({ name, size = 'md', className, showStatus, statusColor =
     sm: 'h-2 w-2',
     md: 'h-3 w-3',
     lg: 'h-3.5 w-3.5',
+    '2xl': 'h-4 w-4',
   };
 
   return (

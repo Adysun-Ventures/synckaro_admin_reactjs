@@ -106,14 +106,23 @@ export default function TeacherDetailsPage() {
     <DashboardLayout title="Teacher Details">
       <div className="space-y-6">
         {/* Back Button and View Stats */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/teachers"
-            className="inline-flex items-center text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
-          >
-            <ArrowLeftIcon className="h-4 w-4 mr-1" />
-            Back to Teachers
-          </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push('/teachers')}
+              className="inline-flex h-9 items-center gap-2 rounded-3xl border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              Back
+            </button>
+            <Link
+              href="/teachers"
+              className="inline-flex items-center text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
+            >
+              Back to Teachers
+            </Link>
+          </div>
           <Link href={`/teachers/${teacherId}/stats`}>
             <Button variant="secondary" size="sm">
               <ChartBarIcon className="h-4 w-4 mr-1" />
@@ -125,23 +134,24 @@ export default function TeacherDetailsPage() {
         {/* Gradient Header Card */}
         <Card
           gradient
-          gradientFrom="from-blue-600"
-          gradientTo="to-blue-800"
-          padding="lg"
+          gradientFrom="from-blue-900"
+          gradientVia="via-blue-600"
+          gradientTo="to-blue-300"
+          padding="sm"
         >
           <div className="flex items-start justify-between">
             {/* Left: Avatar and Info */}
             <div className="flex items-start gap-6">
-              <Avatar name={teacher.name} size="lg" />
+              <Avatar name={teacher.name} size="2xl" />
               <div className="text-white">
                 <h1 className="text-3xl font-bold mb-3">{teacher.name}</h1>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-blue-50">
+                <div className="flex flex-wrap items-center gap-4 text-blue-50">
+                  <div className="flex items-center gap-2">
                     <EnvelopeIcon className="h-4 w-4" />
                     <span>{teacher.email}</span>
                   </div>
                   {teacher.phone && (
-                    <div className="flex items-center gap-2 text-blue-50">
+                    <div className="flex items-center gap-2">
                       <PhoneIcon className="h-4 w-4" />
                       <span>{teacher.phone}</span>
                     </div>

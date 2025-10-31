@@ -6,6 +6,7 @@ interface CardProps {
   className?: string;
   gradient?: boolean;
   gradientFrom?: string;
+  gradientVia?: string;
   gradientTo?: string;
   hover?: boolean;
   border?: boolean;
@@ -17,6 +18,7 @@ export function Card({
   className,
   gradient = false,
   gradientFrom = 'from-blue-600',
+  gradientVia = 'via-blue-700',
   gradientTo = 'to-blue-800',
   hover = false,
   border = true,
@@ -34,7 +36,7 @@ export function Card({
       className={cn(
         'rounded-xl',
         gradient
-          ? `bg-gradient-to-r ${gradientFrom} via-blue-700 ${gradientTo}`
+          ? `bg-gradient-to-r ${gradientFrom} ${gradientVia} ${gradientTo}`
           : 'bg-white',
         border && !gradient && 'border border-neutral-200',
         hover && 'hover:shadow-md transition-shadow',

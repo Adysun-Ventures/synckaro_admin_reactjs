@@ -49,9 +49,7 @@ export function Header({ title = 'Dashboard' }: HeaderProps) {
 
   return (
     <header className="fixed top-0 right-0 left-64 z-40 h-16 border-b border-neutral-200 bg-white">
-      <div className="flex h-full items-center justify-between px-6">
-        <h1 className="text-xl font-semibold text-neutral-900">{title}</h1>
-
+      <div className="flex h-full items-center justify-end px-6">
         {/* User Dropdown */}
         <div ref={dropdownRef} className="relative">
           <button
