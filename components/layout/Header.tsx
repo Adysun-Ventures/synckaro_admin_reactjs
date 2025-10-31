@@ -54,7 +54,7 @@ export function Header({ title = 'Dashboard' }: HeaderProps) {
         <div ref={dropdownRef} className="relative">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="flex items-center space-x-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-neutral-100 focus:outline-none"
           >
             <span className="text-neutral-700 font-medium">{userName}</span>
             <UserCircleIcon className="h-8 w-8 text-neutral-400" />
