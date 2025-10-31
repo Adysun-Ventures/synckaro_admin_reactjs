@@ -50,7 +50,9 @@ export default function TeachersPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
-  const [bulkStatusConfirm, setBulkStatusConfirm] = useState<Teacher["status"] | null>(null);
+  const [bulkStatusConfirm, setBulkStatusConfirm] = useState<
+    Teacher["status"] | null
+  >(null);
 
   // Check auth
   useEffect(() => {
@@ -238,7 +240,9 @@ export default function TeachersPage() {
                 Back
               </button>
               <div className="flex-1 text-center">
-                <h3 className="text-base font-semibold text-neutral-900">Teacher Directory</h3>
+                <h3 className="text-base font-semibold text-neutral-900">
+                  Teacher Directory
+                </h3>
                 <p className="text-xs text-neutral-500">
                   {filteredTeachers.length} teacher
                   {filteredTeachers.length !== 1 ? "s" : ""} total
@@ -251,6 +255,51 @@ export default function TeachersPage() {
                   placeholder="Search teachers by name or email..."
                   className="w-full max-w-md"
                 />
+              </div>
+            </div>
+            <div className="flex flex-warp item-center gap-3 md:gap-6 mt-3">
+              <div className="flex-1 text-center">
+                {selectedIds.length > 0 && (
+                  <div className="pointer-events-none z-20 flex justify-center px-4">
+                    <div className="pointer-events-auto flex flex-col gap-3 rounded-full bg-neutral-900/95 px-5 py-3 text-white shadow-2xl shadow-neutral-900/20 backdrop-blur md:flex-row md:items-center">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium">
+                          {selectedIds.length} selected
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleClearSelection}
+                          className="text-xs font-medium text-neutral-300 transition-colors hover:text-white"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                        {bulkToolbarStatusActions.map(
+                          ({ label, status, icon: Icon, classes }) => (
+                            <button
+                              key={status}
+                              type="button"
+                              onClick={() => handleBulkStatus(status)}
+                              className={`inline-flex items-center gap-1.5 rounded-full border border-white/5 px-3 py-1.5 text-sm font-medium transition-colors ${classes}`}
+                            >
+                              <Icon className="h-4 w-4" />
+                              {label}
+                            </button>
+                          )
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleBulkDeleteClick}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-danger-500/40 bg-danger-500 px-3 py-1.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] hover:bg-danger-500/90"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -384,46 +433,6 @@ export default function TeachersPage() {
               />
             )}
           </div>
-
-          {selectedIds.length > 0 && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4">
-              <div className="pointer-events-auto flex flex-col gap-3 rounded-full bg-neutral-900/95 px-5 py-3 text-white shadow-2xl shadow-neutral-900/20 backdrop-blur md:flex-row md:items-center">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium">
-                    {selectedIds.length} selected
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleClearSelection}
-                    className="text-xs font-medium text-neutral-300 transition-colors hover:text-white"
-                  >
-                    Clear
-                  </button>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                  {bulkToolbarStatusActions.map(({ label, status, icon: Icon, classes }) => (
-                    <button
-                      key={status}
-                      type="button"
-                      onClick={() => handleBulkStatus(status)}
-                      className={`inline-flex items-center gap-1.5 rounded-full border border-white/5 px-3 py-1.5 text-sm font-medium transition-colors ${classes}`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={handleBulkDeleteClick}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-danger-500/40 bg-danger-500 px-3 py-1.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] hover:bg-danger-500/90"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Delete Confirmation Dialog */}
@@ -455,9 +464,9 @@ export default function TeachersPage() {
           onClose={() => setBulkStatusConfirm(null)}
           onConfirm={() => applyBulkStatusUpdate("close")}
           title="Mark Teachers as Closed"
-          message={`Are you sure you want to mark ${selectedIds.length} teacher${
-            selectedIds.length !== 1 ? "s" : ""
-          } as closed?`}
+          message={`Are you sure you want to mark ${
+            selectedIds.length
+          } teacher${selectedIds.length !== 1 ? "s" : ""} as closed?`}
           danger
         />
       </div>

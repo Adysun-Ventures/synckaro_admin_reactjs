@@ -180,7 +180,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
+      <div className="grid gap-6 md:grid-cols-[1fr_1fr]">
        
 
         {/* Trading Insights */}
