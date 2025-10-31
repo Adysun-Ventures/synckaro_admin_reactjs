@@ -8,7 +8,6 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { SearchBar } from '@/components/common/SearchBar';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Pagination } from '@/components/common/Pagination';
-import { Dropdown } from '@/components/common/Dropdown';
 import { ConfirmDialog } from '@/components/common/Modal';
 import { BulkActionBar } from '@/components/common/BulkActionBar';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -158,7 +157,7 @@ export default function TeachersPage() {
                     <TableHead className="text-center">Students</TableHead>
                     <TableHead className="text-center">Trades</TableHead>
                     <TableHead className="text-center">Status</TableHead>
-                    <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead>
+                    <TableHead className="text-center">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -190,32 +189,41 @@ export default function TeachersPage() {
                       <TableCell className="text-center">
                         <StatusBadge status={teacher.status} />
                       </TableCell>
-                      <TableCell>
-                        <Dropdown
-                          items={[
-                            {
-                              label: 'View Details',
-                              icon: <EyeIcon className="h-4 w-4" />,
-                              onClick: () => router.push(`/teachers/${teacher.id}`),
-                            },
-                            {
-                              label: 'Statistics',
-                              icon: <ChartBarIcon className="h-4 w-4" />,
-                              onClick: () => router.push(`/teachers/${teacher.id}/stats`),
-                            },
-                            {
-                              label: 'Activity Logs',
-                              icon: <DocumentTextIcon className="h-4 w-4" />,
-                              onClick: () => router.push(`/teachers/${teacher.id}/logs`),
-                            },
-                            {
-                              label: 'Delete',
-                              icon: <TrashIcon className="h-4 w-4" />,
-                              onClick: () => handleDeleteClick(teacher),
-                              danger: true,
-                            },
-                          ]}
-                        />
+                      <TableCell className="text-center">
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/teachers/${teacher.id}`)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-primary-200 bg-primary-50 text-primary-600 transition-colors hover:bg-primary-100"
+                            aria-label="View details"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/teachers/${teacher.id}/stats`)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-indigo-200 bg-indigo-50 text-indigo-600 transition-colors hover:bg-indigo-100"
+                            aria-label="View statistics"
+                          >
+                            <ChartBarIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/teachers/${teacher.id}/logs`)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-amber-200 bg-amber-50 text-amber-600 transition-colors hover:bg-amber-100"
+                            aria-label="View activity logs"
+                          >
+                            <DocumentTextIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteClick(teacher)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-danger-200 bg-danger-50 text-danger-600 transition-colors hover:bg-danger-100"
+                            aria-label="Delete teacher"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
