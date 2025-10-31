@@ -229,7 +229,7 @@ export default function TeachersPage() {
     <DashboardLayout title="Teachers">
       <div className="space-y-6">
         <div className="relative overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
-          <div className="border-b border-neutral-200 px-4 py-3">
+          <div className="border-b border-neutral-200 px-4 pb-3 pt-5">
             <div className="flex flex-wrap items-center gap-3 md:gap-6">
               <button
                 type="button"
@@ -240,19 +240,15 @@ export default function TeachersPage() {
                 Back
               </button>
               <div className="flex-1 text-center">
-                <h3 className="text-base font-semibold text-neutral-900">
-                  Teacher Directory
-                </h3>
-                <p className="text-xs text-neutral-500">
-                  {filteredTeachers.length} teacher
-                  {filteredTeachers.length !== 1 ? "s" : ""} total
-                </p>
+                <div className="text-2xl font-semibold text-neutral-900">
+                  Teacher List
+                </div>
               </div>
               <div className="flex w-full justify-center md:w-auto md:justify-end">
                 <SearchBar
                   value={searchQuery}
                   onChange={setSearchQuery}
-                  placeholder="Search teachers by name or email..."
+                  placeholder="Search"
                   className="w-full max-w-md"
                 />
               </div>
