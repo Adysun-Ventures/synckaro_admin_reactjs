@@ -61,7 +61,7 @@ export function Header({ title = 'Dashboard' }: HeaderProps) {
           </button>
 
           {isOpen && (
-            <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md border border-neutral-200 bg-white shadow-lg focus:outline-none animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="py-1">
                 <button
                   onClick={() => {
