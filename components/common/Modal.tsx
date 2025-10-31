@@ -69,7 +69,7 @@ export function ConfirmDialog({
       ref={modalRef}
     >
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-40" aria-hidden="true" onClick={onClose} />
+      <div className="fixed inset-0 backdrop-blur-xs bg-opacity-90 bg-black/80" aria-hidden="true" onClick={onClose} />
 
       {/* Modal Panel */}
       <div className="relative w-full max-w-md transform overflow-hidden rounded-xl bg-white p-6 text-left shadow-xl transition-all animate-in zoom-in-95 ease-out duration-200">
