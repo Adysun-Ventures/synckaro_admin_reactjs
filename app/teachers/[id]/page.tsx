@@ -116,12 +116,12 @@ export default function TeacherDetailsPage() {
               <ArrowLeftIcon className="h-4 w-4" />
               Back
             </button>
-            <Link
-              href="/teachers"
-              className="inline-flex items-center text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
-            >
-              Back to Teachers
-            </Link>
+          <Link
+            href="/teachers"
+            className="inline-flex items-center text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
+          >
+            Back to Teachers
+          </Link>
           </div>
           <Link href={`/teachers/${teacherId}/stats`}>
             <Button variant="secondary" size="sm">
@@ -225,7 +225,7 @@ export default function TeacherDetailsPage() {
               />
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               {students.map((student) => (
                 <StudentCard
                   key={student.id}

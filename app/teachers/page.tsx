@@ -244,7 +244,7 @@ export default function TeachersPage() {
   const handleBulkStatus = (status: Teacher["status"]) => {
     if (selectedIds.length === 0) return;
 
-    setBulkStatusConfirm(status);
+      setBulkStatusConfirm(status);
   };
 
   const pendingStatusAction = bulkStatusConfirm
