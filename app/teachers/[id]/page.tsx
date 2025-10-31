@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { 
   ArrowLeftIcon, 
@@ -8,7 +8,8 @@ import {
   EnvelopeIcon, 
   PhoneIcon, 
   CalendarIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -22,6 +23,7 @@ import { TradeListHeader } from '@/components/teachers/TradeListHeader';
 import { ConfirmDialog } from '@/components/common/Modal';
 import { EmptyState } from '@/components/common/EmptyState';
 import { storage } from '@/lib/storage';
+import { cn } from '@/lib/utils';
 import { Teacher, Student, Trade } from '@/types';
 import { isAuthenticated } from '@/services/authService';
 
@@ -34,6 +36,7 @@ export default function TeacherDetailsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
 
   // Check auth
   useEffect(() => {
@@ -42,24 +45,21 @@ export default function TeacherDetailsPage() {
     }
   }, [router]);
 
-  // Load teacher data
-  useEffect(() => {
+  const loadData = useCallback(() => {
     const teachers = storage.getItem('teachers') || [];
     const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
-    
+
     if (!foundTeacher) {
       router.push('/teachers');
       return;
     }
-    
+
     setTeacher(foundTeacher);
 
-    // Load students for this teacher
     const allStudents = storage.getItem('students') || [];
     const teacherStudents = allStudents.filter((s: Student) => s.teacherId === teacherId);
     setStudents(teacherStudents);
 
-    // Load recent trades for this teacher (limit to 10)
     const allTrades = storage.getItem('trades') || [];
     const teacherTrades = allTrades
       .filter((t: Trade) => t.teacherId === teacherId)
@@ -71,6 +71,10 @@ export default function TeacherDetailsPage() {
       .slice(0, 10);
     setTrades(teacherTrades);
   }, [teacherId, router]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Delete teacher
   const handleDelete = () => {
@@ -90,6 +94,14 @@ export default function TeacherDetailsPage() {
     setStudents(updatedStudents.filter((s: Student) => s.teacherId === teacherId));
   };
 
+  const handleReload = () => {
+    setIsReloading(true);
+    setTimeout(() => {
+      loadData();
+      setIsReloading(false);
+    }, 200);
+  };
+
   if (!isAuthenticated() || !teacher) {
     return null;
   }
@@ -105,9 +117,9 @@ export default function TeacherDetailsPage() {
   return (
     <DashboardLayout title="Teacher Details">
       <div className="space-y-6">
-        {/* Back Button and View Stats */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        {/* Header Toolbar */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => router.push('/teachers')}
@@ -116,19 +128,29 @@ export default function TeacherDetailsPage() {
               <ArrowLeftIcon className="h-4 w-4" />
               Back
             </button>
-          <Link
-            href="/teachers"
-            className="inline-flex items-center text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
-          >
-            Back to Teachers
-          </Link>
           </div>
-          <Link href={`/teachers/${teacherId}/stats`}>
-            <Button variant="secondary" size="sm">
-              <ChartBarIcon className="h-4 w-4 mr-1" />
-              View Statistics
-            </Button>
-          </Link>
+
+          <div className="flex-1 text-center">
+            <h2 className="text-lg font-semibold text-neutral-900">Teacher Details</h2>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleReload}
+              disabled={isReloading}
+              className="inline-flex h-9 items-center gap-2 rounded-3xl border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <ArrowPathIcon className={cn('h-4 w-4', isReloading && 'animate-spin')} />
+            </button>
+            <div className="hidden md:block">
+              <input
+                type="search"
+                placeholder="Search"
+                className="h-9 w-48 rounded-3xl border border-neutral-200 bg-white px-4 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Gradient Header Card */}
@@ -165,8 +187,14 @@ export default function TeacherDetailsPage() {
             </div>
 
             {/* Right: Status and Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <StatusBadge status={teacher.status} />
+              <Link href={`/teachers/${teacherId}/stats`} className="inline-flex">
+                <Button variant="secondary" size="sm">
+                  <ChartBarIcon className="mr-1 h-4 w-4" />
+                  View Statistics
+                </Button>
+              </Link>
               <Button
                 variant="danger"
                 size="sm"
