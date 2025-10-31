@@ -14,6 +14,7 @@ import {
   BanknotesIcon,
 } from '@heroicons/react/24/outline';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Card } from '@/components/common/Card';
 import { isAuthenticated, getCurrentUser } from '@/services/authService';
 import { cn } from '@/lib/utils';
 
@@ -138,6 +139,64 @@ export default function DashboardPage() {
     },
   ];
 
+  const reportHighlights = [
+    {
+      label: 'Daily Volume',
+      value: '₹12.4Cr',
+      delta: '+4.3%',
+      positive: true,
+    },
+    {
+      label: 'Net P&L (7d)',
+      value: '+₹2.1Cr',
+      delta: '+1.8%',
+      positive: true,
+    },
+    {
+      label: 'Risk Exposure',
+      value: '₹38.6L',
+      delta: '-2.1%',
+      positive: true,
+    },
+    {
+      label: 'Orders Pending',
+      value: '18',
+      delta: '+6',
+      positive: false,
+    },
+  ];
+
+  const reportBreakdown = [
+    {
+      segment: 'Breakout Setups',
+      trades: 42,
+      winRate: '64%',
+      pnl: '+₹12,830',
+      positive: true,
+    },
+    {
+      segment: 'Intraday Momentum',
+      trades: 35,
+      winRate: '58%',
+      pnl: '+₹8,410',
+      positive: true,
+    },
+    {
+      segment: 'Swing Reversal',
+      trades: 18,
+      winRate: '41%',
+      pnl: '-₹2,640',
+      positive: false,
+    },
+    {
+      segment: 'Options Hedging',
+      trades: 27,
+      winRate: '52%',
+      pnl: '+₹4,120',
+      positive: true,
+    },
+  ];
+
   return (
     <DashboardLayout title="Dashboard">
       {/* Welcome Card */}
@@ -180,14 +239,74 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[1fr_1fr]">
-       
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
+        <Card
+          padding="lg"
+          tone="neutral"
+          hover
+          header={
+            <div>
+              <h3 className="text-lg font-semibold text-neutral-900">Reports Overview</h3>
+              <p className="text-xs font-medium text-neutral-500">Updated 5 minutes ago</p>
+            </div>
+          }
+          footer={<span className="text-xs text-neutral-400">Synthetic data for demonstration purposes.</span>}
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            {reportHighlights.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl border border-neutral-200 bg-white/80 px-4 py-3 shadow-sm"
+              >
+                <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">{item.label}</p>
+                <div className="mt-2 flex items-end justify-between">
+                  <p className="text-2xl font-semibold text-neutral-900">{item.value}</p>
+                  <span
+                    className={cn(
+                      'text-xs font-semibold',
+                      item.positive ? 'text-success-600' : 'text-danger-600'
+                    )}
+                  >
+                    {item.delta}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
 
-        {/* Trading Insights */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
-          <h3 className="text-lg font-semibold text-neutral-900 mb-4">
-            Trading Insights
-          </h3>
+          <div className="mt-6 overflow-hidden rounded-2xl border border-neutral-200 bg-white/90">
+            <div className="grid grid-cols-[1.5fr_repeat(3,1fr)] gap-3 border-b border-neutral-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+              <span>Strategy / Desk</span>
+              <span className="text-right">Trades</span>
+              <span className="text-right">Win Rate</span>
+              <span className="text-right">Net P&L</span>
+            </div>
+            <div className="divide-y divide-neutral-100">
+              {reportBreakdown.map((row) => (
+                <div key={row.segment} className="grid grid-cols-[1.5fr_repeat(3,1fr)] items-center gap-3 px-4 py-3 text-sm">
+                  <span className="font-medium text-neutral-800">{row.segment}</span>
+                  <span className="justify-self-end text-neutral-700">{row.trades}</span>
+                  <span className="justify-self-end text-neutral-700">{row.winRate}</span>
+                  <span
+                    className={cn(
+                      'justify-self-end font-semibold',
+                      row.positive ? 'text-success-600' : 'text-danger-600'
+                    )}
+                  >
+                    {row.pnl}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+
+        <Card
+          padding="lg"
+          tone="neutral"
+          hover
+          header={<h3 className="text-lg font-semibold text-neutral-900">Trading Insights</h3>}
+        >
           <div className="flex flex-col gap-3">
             {insightCards.map((card) => {
               const toneStyles = {
@@ -231,7 +350,7 @@ export default function DashboardPage() {
               );
             })}
           </div>
-        </div>
+        </Card>
       </div>
     </DashboardLayout>
   );
