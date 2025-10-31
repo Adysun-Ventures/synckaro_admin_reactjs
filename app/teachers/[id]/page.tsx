@@ -14,7 +14,6 @@ import {
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/common/Button';
-import { StatusBadge } from '@/components/common/StatusBadge';
 import { Avatar } from '@/components/common/Avatar';
 import { Card } from '@/components/common/Card';
 import { StudentCard } from '@/components/teachers/StudentCard';
@@ -38,6 +37,15 @@ export default function TeacherDetailsPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isReloading, setIsReloading] = useState(false);
 
+  const statusToneMap: Record<Teacher['status'], 'success' | 'danger' | 'warning'> = {
+    active: 'success',
+    live: 'success',
+    open: 'warning',
+    test: 'warning',
+    inactive: 'danger',
+    close: 'danger',
+  };
+
   // Check auth
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -48,12 +56,12 @@ export default function TeacherDetailsPage() {
   const loadData = useCallback(() => {
     const teachers = storage.getItem('teachers') || [];
     const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
-
+    
     if (!foundTeacher) {
       router.push('/teachers');
       return;
     }
-
+    
     setTeacher(foundTeacher);
 
     const allStudents = storage.getItem('students') || [];
@@ -124,7 +132,7 @@ export default function TeacherDetailsPage() {
               type="button"
               onClick={() => router.push('/teachers')}
               className="inline-flex h-9 items-center gap-2 rounded-3xl border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
-            >
+          >
               <ArrowLeftIcon className="h-4 w-4" />
               Back
             </button>
@@ -155,61 +163,76 @@ export default function TeacherDetailsPage() {
 
         {/* Gradient Header Card */}
         <Card
-          gradient
-          gradientFrom="from-blue-900"
-          gradientVia="via-blue-600"
-          gradientTo="to-blue-300"
-          padding="sm"
-        >
-          <div className="flex items-start justify-between">
-            {/* Left: Avatar and Info */}
-            <div className="flex items-start gap-6">
-              <Avatar name={teacher.name} size="2xl" />
-              <div className="text-white">
-                <h1 className="text-3xl font-bold mb-3">{teacher.name}</h1>
-                <div className="flex flex-wrap items-center gap-4 text-blue-50">
-                  <div className="flex items-center gap-2">
-                    <EnvelopeIcon className="h-4 w-4" />
-                    <span>{teacher.email}</span>
-                  </div>
-                  {teacher.phone && (
+          padding="lg"
+          tone="neutral"
+          hover
+          header={
+            <>
+              <div className="flex items-center gap-3">
+                <Avatar
+                  name={teacher.name}
+                  size="2xl"
+                  showStatus
+                  statusColor={statusToneMap[teacher.status]}
+                />
+                <div>
+                  <h1 className="text-2xl font-bold text-neutral-900">{teacher.name}</h1>
+                  <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
                     <div className="flex items-center gap-2">
-                      <PhoneIcon className="h-4 w-4" />
-                      <span>{teacher.phone}</span>
+                      <EnvelopeIcon className="h-4 w-4" />
+                      <span>{teacher.email}</span>
                     </div>
-                  )}
-                  <div className="flex items-center gap-2 text-blue-100">
-                    <CalendarIcon className="h-4 w-4" />
-                    <span>Joined {formatDate(teacher.joinedDate)}</span>
+                    {teacher.phone && (
+                      <div className="flex items-center gap-2">
+                        <PhoneIcon className="h-4 w-4" />
+                        <span>{teacher.phone}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-4 w-4" />
+                      <span>Joined {formatDate(teacher.joinedDate)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Right: Status and Actions */}
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <StatusBadge status={teacher.status} />
-              <Link href={`/teachers/${teacherId}/stats`} className="inline-flex">
-                <Button variant="secondary" size="sm">
-                  <ChartBarIcon className="mr-1 h-4 w-4" />
-                  View Statistics
+              <div className="flex flex-wrap items-center gap-2">
+                <Link href={`/teachers/${teacherId}/stats`} className="inline-flex">
+                  <Button variant="secondary" size="sm">
+                    <ChartBarIcon className="mr-1 h-4 w-4" />
+                    View Statistics
+                  </Button>
+                </Link>
+                <Button variant="danger" size="sm" onClick={() => setDeleteConfirmOpen(true)}>
+                  <TrashIcon className="mr-1 h-4 w-4" />
+                  Delete
                 </Button>
-              </Link>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => setDeleteConfirmOpen(true)}
-              >
-                <TrashIcon className="h-4 w-4 mr-1" />
-                Delete
-              </Button>
+              </div>
+            </>
+          }
+          footer={
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500">
+              <span>Last synced {new Date().toLocaleTimeString()}</span>
+              <span>Total Students: {students.length} • Total Trades: {trades.length}</span>
+            </div>
+          }
+        >
+          <div className="flex items-start justify-between gap-6">
+            {/* Left: Avatar and Info */}
+            <div className="flex-1">
+              <p className="text-sm text-neutral-600">
+                Empowering students with personalized trading strategies and disciplined risk management.
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-neutral-500">
+              <span>Capital Managed: ₹{((teacher.totalCapital || 0) / 100000).toFixed(1)}L</span>
+              <span>Win Rate: {teacher.winRate?.toFixed(1) || 0}%</span>
             </div>
           </div>
         </Card>
 
         {/* Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card padding="md" hover>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          <Card padding="lg" hover tone="neutral">
             <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Total Students</p>
             <p className="text-2xl font-bold text-primary-600">{teacher.totalStudents}</p>
             <p className="text-xs text-neutral-400 mt-1">
@@ -217,13 +240,13 @@ export default function TeacherDetailsPage() {
             </p>
           </Card>
           
-          <Card padding="md" hover>
+          <Card padding="lg" hover tone="neutral">
             <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Total Trades</p>
             <p className="text-2xl font-bold text-success-600">{teacher.totalTrades}</p>
             <p className="text-xs text-neutral-400 mt-1">recent activity</p>
           </Card>
           
-          <Card padding="md" hover>
+          <Card padding="lg" hover tone="neutral">
             <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Total Capital</p>
             <p className="text-2xl font-bold text-warning-600">
               ₹{((teacher.totalCapital || 0) / 100000).toFixed(1)}L
@@ -231,7 +254,7 @@ export default function TeacherDetailsPage() {
             <p className="text-xs text-neutral-400 mt-1">under management</p>
           </Card>
           
-          <Card padding="md" hover>
+          <Card padding="lg" hover tone="neutral">
             <p className="text-xs text-neutral-500 uppercase tracking-wide mb-1">Win Rate</p>
             <p className="text-2xl font-bold text-neutral-900">{teacher.winRate?.toFixed(1) || 0}%</p>
             <p className="text-xs text-neutral-400 mt-1">success rate</p>
@@ -246,7 +269,7 @@ export default function TeacherDetailsPage() {
           </div>
           
           {students.length === 0 ? (
-            <Card>
+            <Card padding="lg" tone="neutral">
               <EmptyState
                 title="No students yet"
                 description="This teacher doesn't have any students assigned"
@@ -273,14 +296,14 @@ export default function TeacherDetailsPage() {
           </div>
           
           {trades.length === 0 ? (
-            <Card>
+            <Card padding="lg" tone="neutral">
               <EmptyState
                 title="No trades yet"
                 description="This teacher hasn't executed any trades"
               />
             </Card>
           ) : (
-            <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+            <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white/80 shadow-sm">
               <TradeListHeader />
               <div className="divide-y divide-neutral-100">
                 {trades.map((trade) => (
