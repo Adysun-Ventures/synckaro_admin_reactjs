@@ -20,6 +20,11 @@ import {
   StopIcon,
   BoltIcon,
   PauseIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  PlayCircleIcon,
+  StopCircleIcon,
+  PauseCircleIcon,
 } from "@heroicons/react/24/outline";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { SearchBar } from "@/components/common/SearchBar";
@@ -98,44 +103,70 @@ export default function TeachersPage() {
     status: Teacher["status"];
     icon: ComponentType<ComponentProps<typeof CheckIcon>>;
     classes: string;
+    modalIcon: ComponentType<ComponentProps<typeof CheckIcon>>;
+    modalColors: string;
   }> = [
     {
       label: "Active",
       status: "active",
       icon: CheckIcon,
-      classes: "bg-green-500/15 text-green-200 hover:bg-green-500/25",
+      classes:
+        "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
+      modalIcon: CheckCircleIcon,
+      modalColors: "bg-emerald-100 text-emerald-600",
     },
     {
       label: "Inactive",
       status: "inactive",
       icon: XMarkIcon,
-      classes: "bg-red-500/15 text-red-200 hover:bg-red-500/25",
+      classes: "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100",
+      modalIcon: XCircleIcon,
+      modalColors: "bg-rose-100 text-rose-600",
     },
     {
       label: "Open",
       status: "open",
       icon: PlayIcon,
-      classes: "bg-emerald-500/15 text-emerald-200 hover:bg-emerald-500/25",
+      classes:
+        "border-teal-200 bg-teal-50 text-teal-600 hover:bg-teal-100",
+      modalIcon: PlayCircleIcon,
+      modalColors: "bg-teal-100 text-teal-600",
     },
     {
       label: "Close",
       status: "close",
       icon: StopIcon,
-      classes: "bg-rose-500/15 text-rose-200 hover:bg-rose-500/25",
+      classes:
+        "border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-100",
+      modalIcon: StopCircleIcon,
+      modalColors: "bg-purple-100 text-purple-600",
     },
     {
       label: "Live",
       status: "live",
       icon: BoltIcon,
-      classes: "bg-lime-500/15 text-lime-200 hover:bg-lime-500/25",
+      classes:
+        "border-lime-200 bg-lime-50 text-lime-600 hover:bg-lime-100",
+      modalIcon: BoltIcon,
+      modalColors: "bg-lime-100 text-lime-600",
     },
     {
       label: "Test",
       status: "test",
       icon: PauseIcon,
-      classes: "bg-amber-500/15 text-amber-200 hover:bg-amber-500/25",
+      classes:
+        "border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100",
+      modalIcon: PauseCircleIcon,
+      modalColors: "bg-amber-100 text-amber-600",
     },
   ];
+
+  const getBulkStatusAction = (status: Teacher["status"]) =>
+    bulkToolbarStatusActions.find((action) => action.status === status) ??
+    null;
+
+  const getBulkStatusLabel = (status: Teacher["status"]) =>
+    getBulkStatusAction(status)?.label ?? status;
 
   // Select all toggle
   const handleSelectAll = () => {
@@ -213,13 +244,12 @@ export default function TeachersPage() {
   const handleBulkStatus = (status: Teacher["status"]) => {
     if (selectedIds.length === 0) return;
 
-    if (status === "close") {
-      setBulkStatusConfirm(status);
-      return;
-    }
-
-    applyBulkStatusUpdate(status);
+    setBulkStatusConfirm(status);
   };
+
+  const pendingStatusAction = bulkStatusConfirm
+    ? getBulkStatusAction(bulkStatusConfirm)
+    : null;
 
   if (!isAuthenticated()) {
     return null;
@@ -257,15 +287,15 @@ export default function TeachersPage() {
               <div className="flex-1 text-center">
                 {selectedIds.length > 0 && (
                   <div className="pointer-events-none z-20 flex justify-center px-4">
-                    <div className="pointer-events-auto flex flex-col gap-3 rounded-full bg-neutral-900/95 px-5 py-3 text-white shadow-2xl shadow-neutral-900/20 backdrop-blur md:flex-row md:items-center">
+                    <div className="pointer-events-auto flex flex-col gap-3 rounded-3xl px-5 py-3 text-neutral-900  md:flex-row md:items-center">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium">
+                        <span className="text-sm font-medium text-neutral-900">
                           {selectedIds.length} selected
                         </span>
                         <button
                           type="button"
                           onClick={handleClearSelection}
-                          className="text-xs font-medium text-neutral-300 transition-colors hover:text-white"
+                          className="text-xs font-medium text-neutral-500 transition-colors hover:text-neutral-900"
                         >
                           Clear
                         </button>
@@ -277,7 +307,7 @@ export default function TeachersPage() {
                               key={status}
                               type="button"
                               onClick={() => handleBulkStatus(status)}
-                              className={`inline-flex items-center gap-1.5 rounded-full border border-white/5 px-3 py-1.5 text-sm font-medium transition-colors ${classes}`}
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${classes}`}
                             >
                               <Icon className="h-4 w-4" />
                               {label}
@@ -287,7 +317,7 @@ export default function TeachersPage() {
                         <button
                           type="button"
                           onClick={handleBulkDeleteClick}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-danger-500/40 bg-danger-500 px-3 py-1.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] hover:bg-danger-500/90"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-danger-200 bg-danger-50 px-3 py-1.5 text-sm font-semibold text-danger-700 transition-transform hover:scale-[1.02] hover:bg-danger-100 hover:text-danger-800"
                         >
                           <TrashIcon className="h-4 w-4" />
                           Delete
@@ -456,14 +486,32 @@ export default function TeachersPage() {
         />
 
         <ConfirmDialog
-          open={bulkStatusConfirm === "close"}
+          open={bulkStatusConfirm !== null}
           onClose={() => setBulkStatusConfirm(null)}
-          onConfirm={() => applyBulkStatusUpdate("close")}
-          title="Mark Teachers as Closed"
-          message={`Are you sure you want to mark ${
-            selectedIds.length
-          } teacher${selectedIds.length !== 1 ? "s" : ""} as closed?`}
-          danger
+          onConfirm={() =>
+            bulkStatusConfirm && applyBulkStatusUpdate(bulkStatusConfirm)
+          }
+          title={
+            bulkStatusConfirm
+              ? `Update Status to ${getBulkStatusLabel(bulkStatusConfirm)}`
+              : "Update Status"
+          }
+          message={
+            bulkStatusConfirm
+              ? `Are you sure you want to mark ${selectedIds.length} teacher${
+                  selectedIds.length !== 1 ? "s" : ""
+                } as ${getBulkStatusLabel(bulkStatusConfirm)}?`
+              : "Confirm status change."
+          }
+          danger={
+            bulkStatusConfirm === "inactive" || bulkStatusConfirm === "close"
+          }
+          icon={
+            pendingStatusAction ? (
+              <pendingStatusAction.modalIcon className="h-6 w-6" />
+            ) : undefined
+          }
+          iconWrapperClassName={pendingStatusAction?.modalColors}
         />
       </div>
     </DashboardLayout>

@@ -17,6 +17,8 @@ interface ModalProps {
   danger?: boolean;
   loading?: boolean;
   children?: ReactNode;
+  icon?: ReactNode;
+  iconWrapperClassName?: string;
 }
 
 export function ConfirmDialog({
@@ -30,6 +32,8 @@ export function ConfirmDialog({
   danger = false,
   loading = false,
   children,
+  icon,
+  iconWrapperClassName,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -77,12 +81,19 @@ export function ConfirmDialog({
       {/* Modal Panel */}
       <div className="relative w-full max-w-md transform overflow-hidden rounded-xl bg-white p-6 text-left shadow-xl transition-all animate-in zoom-in-95 ease-out duration-200">
         <div className="flex items-start">
-          {danger && (
-            <div className="mx-auto flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-danger-100 sm:mx-0 sm:h-10 sm:w-10">
-              <ExclamationTriangleIcon className="h-6 w-6 text-danger-600" aria-hidden="true" />
+          {(danger || icon) && (
+            <div
+              className={cn(
+                'mx-auto flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10',
+                iconWrapperClassName ?? (danger ? 'bg-danger-100 text-danger-600' : 'bg-neutral-100 text-neutral-600')
+              )}
+            >
+              {icon ?? (
+                <ExclamationTriangleIcon className="h-6 w-6" aria-hidden="true" />
+              )}
             </div>
           )}
-          <div className={cn('flex-1', danger ? 'ml-4' : '')}>
+          <div className={cn('flex-1', danger || icon ? 'ml-4' : '')}>
             <h3 className="text-lg font-semibold leading-6 text-neutral-900" id="modal-title">
               {title}
             </h3>
