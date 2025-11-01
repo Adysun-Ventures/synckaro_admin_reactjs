@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -17,6 +17,7 @@ import { Avatar } from '@/components/common/Avatar';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Toggle } from '@/components/common/Toggle';
 import { EmptyState } from '@/components/common/EmptyState';
+import { Pagination } from '@/components/common/Pagination';
 import { TradeListHeader } from '@/components/teachers/TradeListHeader';
 import { CompactTradeRow } from '@/components/teachers/CompactTradeRow';
 import { storage } from '@/lib/storage';
@@ -40,6 +41,8 @@ const formatDate = (dateString?: string) => {
   });
 };
 
+const PAGE_SIZE_OPTIONS = [50, 100, 200, 300];
+
 export default function StudentProfilePage() {
   const router = useRouter();
   const params = useParams();
@@ -48,6 +51,8 @@ export default function StudentProfilePage() {
   const [student, setStudent] = useState<Student | null>(null);
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -80,6 +85,7 @@ export default function StudentProfilePage() {
       });
 
     setTrades(studentTrades);
+    setCurrentPage(1);
   }, [studentId, router]);
 
   const pnl = useMemo(() => {
@@ -102,6 +108,37 @@ export default function StudentProfilePage() {
     const nextStudent = updatedStudents.find((s: Student) => s.id === student.id) || null;
     setStudent(nextStudent);
   };
+
+  const totalTrades = trades.length;
+  const totalPages = Math.max(1, Math.ceil(totalTrades / pageSize));
+
+  const handlePageSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextSize = Number(event.target.value);
+    setPageSize(nextSize);
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(totalTrades / pageSize));
+    setCurrentPage((prev) => (prev > maxPage ? maxPage : prev));
+  }, [totalTrades, pageSize]);
+
+  const paginatedTrades = useMemo(() => {
+    if (totalTrades === 0) {
+      return [];
+    }
+
+    const startIndex = (currentPage - 1) * pageSize;
+    return trades.slice(startIndex, startIndex + pageSize);
+  }, [currentPage, trades, totalTrades, pageSize]);
+
+  const pageStart = totalTrades === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const pageEnd = totalTrades === 0 ? 0 : Math.min(currentPage * pageSize, totalTrades);
+  const entriesSummary =
+    totalTrades === 0
+      ? 'No entries to display'
+      : `Showing ${pageStart} to ${pageEnd} of ${totalTrades} entries`;
+  const pageSummary = totalTrades === 0 ? '' : `Showing page ${currentPage} of ${totalPages}`;
 
   if (!student || !isAuthenticated()) {
     return null;
@@ -219,9 +256,37 @@ export default function StudentProfilePage() {
             <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
               <TradeListHeader />
               <div className="divide-y divide-neutral-100">
-                {trades.map((trade) => (
+                {paginatedTrades.map((trade) => (
                   <CompactTradeRow key={trade.id} trade={trade} />
                 ))}
+              </div>
+              <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                  <label className="flex items-center gap-1">
+                    <span>Show</span>
+                    <select
+                      value={pageSize}
+                      onChange={handlePageSizeChange}
+                      className="h-8 rounded-md border border-neutral-300 bg-white px-2 text-xs font-medium text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    >
+                      {PAGE_SIZE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <span>entries</span>
+                  </label>
+                  <span>{entriesSummary}</span>
+                </div>
+                {totalTrades > 0 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    className="w-full md:w-auto"
+                  />
+                )}
               </div>
             </div>
           )}

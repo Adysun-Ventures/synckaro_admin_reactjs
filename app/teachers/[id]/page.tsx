@@ -306,7 +306,7 @@ export default function TeacherDetailsPage() {
               />
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
               {students.map((student) => (
                 <StudentCard
                   key={student.id}
