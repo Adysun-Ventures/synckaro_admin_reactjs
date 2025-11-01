@@ -22,6 +22,7 @@ export function loadSeedData() {
   storage.setItem('students', seedData.students);
   storage.setItem('trades', seedData.trades);
   storage.setItem('activityLogs', seedData.activityLogs);
+  storage.setItem('stats', seedData.stats);
   storage.setItem('seedDataGeneratedAt', seedData.generatedAt);
 
   console.log('Seed data loaded successfully:', {
@@ -41,6 +42,7 @@ export function clearSeedData() {
   storage.removeItem('students');
   storage.removeItem('trades');
   storage.removeItem('activityLogs');
+  storage.removeItem('stats');
   storage.removeItem('seedDataGeneratedAt');
   console.log('Seed data cleared');
 }

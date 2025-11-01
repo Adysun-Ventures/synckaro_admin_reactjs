@@ -566,11 +566,14 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 **Purpose:** Client-side data persistence for local-first approach
 
 **Storage Keys Convention:**
-- `syncKaro_auth` - Authentication data (user, token, role)
-- `syncKaro_teachers` - Teachers list
-- `syncKaro_students` - Students list
-- `syncKaro_trades` - Trades data
-- `syncKaro_connections` - Connection requests
+- `syncKaro_auth` – Authentication payload (user, token, role)
+- `syncKaro_teachers` – Seeded teacher directory with computed stats
+- `syncKaro_students` – Student roster linked to teachers
+- `syncKaro_trades` – Trade history (teacher + mirrored student fills)
+- `syncKaro_activityLogs` – Timeline entries for teacher activity feeds
+- `syncKaro_stats` – Aggregate snapshot (totals, capital, P&L, win rate)
+- `syncKaro_seedDataGeneratedAt` – ISO timestamp of the last seed refresh
+- `syncKaro_connections` – Connection requests (placeholder for teacher/student linking)
 
 **Example Implementation:**
 ```typescript

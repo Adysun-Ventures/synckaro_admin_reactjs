@@ -1,265 +1,350 @@
-import { Teacher, Student, Trade, ActivityLog } from '@/types';
+import { ActivityLog, Student, Teacher, Trade } from '@/types';
 
-/**
- * Generate comprehensive dummy data for SyncKaro Admin
- * This data will be loaded into localStorage on app initialization
- */
-
-// Teacher names and specializations
-const teacherNames = [
-  'Rajesh Kumar', 'Priya Sharma', 'Amit Patel', 'Neha Singh', 'Vikram Mehta',
-  'Anjali Gupta', 'Sanjay Reddy', 'Kavita Joshi', 'Arjun Nair', 'Pooja Desai',
-  'Rahul Verma', 'Deepika Rao', 'Karan Shah', 'Sneha Iyer', 'Rohan Kapoor',
-  'Madhuri Kulkarni', 'Aditya Malhotra', 'Shruti Pandey', 'Varun Bhatia', 'Ritika Agarwal',
-  'Nikhil Saxena', 'Divya Menon', 'Suresh Pillai', 'Ankita Khanna'
+const TEACHER_NAMES = [
+  'Rajesh Kumar',
+  'Priya Sharma',
+  'Amit Patel',
+  'Neha Singh',
+  'Vikram Mehta',
+  'Anjali Gupta',
+  'Sanjay Reddy',
+  'Kavita Joshi',
+  'Arjun Nair',
+  'Pooja Desai',
+  'Rahul Verma',
+  'Deepika Rao',
 ];
 
-const specializations = [
-  'Intraday Trading', 'Swing Trading', 'Options Trading', 'Futures Trading',
-  'Technical Analysis', 'Fundamental Analysis', 'Scalping', 'Position Trading'
+const TEACHER_SPECIALISATIONS = [
+  'Intraday Trading',
+  'Swing Trading',
+  'Options Strategies',
+  'Futures & Hedging',
+  'Technical Analysis',
+  'Fundamental Insights',
+  'Momentum Trading',
+  'Position Building',
 ];
 
-const studentFirstNames = [
-  'Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Arnav', 'Ayaan', 'Krishna', 'Ishaan',
-  'Shaurya', 'Atharv', 'Advik', 'Pratham', 'Reyansh', 'Kiaan', 'Aadhya', 'Ananya', 'Pari', 'Anika',
-  'Navya', 'Angel', 'Diya', 'Myra', 'Sara', 'Ira', 'Anvi', 'Riya', 'Prisha', 'Aarohi',
-  'Shanaya', 'Saanvi', 'Kavya', 'Aarya', 'Pihu', 'Avni', 'Aahana', 'Zara', 'Mishka', 'Nisha'
+const TEACHER_STATUSES: Teacher['status'][] = ['active', 'live', 'open', 'inactive', 'test', 'close'];
+
+const STUDENT_FIRST_NAMES = [
+  'Aarav',
+  'Vivaan',
+  'Aditya',
+  'Vihaan',
+  'Arjun',
+  'Sai',
+  'Arnav',
+  'Ayaan',
+  'Krishna',
+  'Ishaan',
+  'Shaurya',
+  'Atharv',
+  'Advik',
+  'Pratham',
+  'Reyansh',
+  'Kiaan',
+  'Ananya',
+  'Pari',
+  'Navya',
+  'Aanya',
 ];
 
-const lastNames = [
-  'Kumar', 'Sharma', 'Patel', 'Singh', 'Gupta', 'Reddy', 'Joshi', 'Nair', 'Verma', 'Rao',
-  'Shah', 'Iyer', 'Mehta', 'Desai', 'Kulkarni', 'Pandey', 'Agarwal', 'Saxena', 'Menon', 'Khanna'
+const STUDENT_LAST_NAMES = [
+  'Kumar',
+  'Sharma',
+  'Patel',
+  'Singh',
+  'Gupta',
+  'Reddy',
+  'Joshi',
+  'Nair',
+  'Verma',
+  'Rao',
+  'Shah',
+  'Iyer',
+  'Mehta',
+  'Desai',
+  'Kulkarni',
+  'Pandey',
+  'Agarwal',
+  'Saxena',
+  'Menon',
+  'Khanna',
 ];
 
-const stocks = [
-  'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'ICICIBANK', 'HINDUNILVR', 'ITC', 'SBIN', 'BHARTIARTL', 'KOTAKBANK',
-  'LT', 'AXISBANK', 'ASIANPAINT', 'MARUTI', 'TITAN', 'SUNPHARMA', 'ULTRACEMCO', 'NESTLEIND', 'BAJFINANCE', 'WIPRO'
+const STRATEGIES = ['Conservative', 'Moderate', 'Aggressive', 'Momentum', 'Swing'];
+const BROKERS = ['Zerodha', 'Upstox', 'Angel One', 'ICICI Direct', '5Paisa'];
+
+const STOCKS = [
+  'RELIANCE',
+  'TCS',
+  'HDFCBANK',
+  'INFY',
+  'ICICIBANK',
+  'HINDUNILVR',
+  'ITC',
+  'SBIN',
+  'BHARTIARTL',
+  'KOTAKBANK',
+  'LT',
+  'AXISBANK',
+  'ASIANPAINT',
+  'MARUTI',
+  'TITAN',
+  'SUNPHARMA',
+  'ULTRACEMCO',
+  'NESTLEIND',
+  'BAJFINANCE',
+  'WIPRO',
 ];
 
-const exchanges = ['NSE', 'BSE'] as const;
-const tradeTypes = ['BUY', 'SELL'] as const;
-const statuses = ['active', 'inactive'] as const;
-const tradeStatuses = ['pending', 'executed', 'completed', 'failed', 'cancelled'] as const;
+const EXCHANGES: Array<Trade['exchange']> = ['NSE', 'BSE'];
+const TRADE_STATUSES: Trade['status'][] = ['executed', 'completed', 'pending', 'failed', 'cancelled'];
 
-// Helper functions
-function randomDate(start: Date, end: Date): Date {
-  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-}
+const BASE_TEACHER_JOIN = new Date('2023-01-09T09:30:00.000Z');
+const BASE_STUDENT_JOIN = new Date('2024-01-04T09:15:00.000Z');
+const BASE_TRADE_TIME = new Date('2024-02-12T10:00:00.000Z');
 
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+type StudentMap = Record<string, Student[]>;
+type TradeMap = Record<string, Trade[]>;
 
-function randomFloat(min: number, max: number, decimals: number = 2): number {
-  return parseFloat((Math.random() * (max - min) + min).toFixed(decimals));
-}
+const DAY = 24 * 60 * 60 * 1000;
 
-function randomElement<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)];
-}
+const toSlug = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '.')
+    .replace(/\.+/g, '.')
+    .replace(/^\.|\.$/g, '');
 
-// Generate Teachers
-export function generateTeachers(): Teacher[] {
-  return teacherNames.map((name, index) => {
-    const email = name.toLowerCase().replace(' ', '.') + '@synckaro.com';
-    const phone = `${randomInt(6, 9)}${randomInt(100000000, 999999999)}`;
-    const joinedDate = randomDate(new Date(2023, 0, 1), new Date(2024, 11, 31));
-    const totalTrades = randomInt(50, 500);
-    const winRate = randomFloat(45, 75);
-    
+const teacherMobile = (index: number) => (9100000000 + index * 137).toString();
+const studentMobile = (index: number) => (9200000000 + index * 97).toString();
+
+function createTeachers(): Teacher[] {
+  return TEACHER_NAMES.map((name, index) => {
+    const joinedDate = new Date(BASE_TEACHER_JOIN.getTime() + index * 18 * DAY);
     return {
       id: `teacher-${index + 1}`,
       name,
-      email,
-      phone,
-      status: randomElement(statuses),
+      email: `${toSlug(name)}@synckaro.com`,
+      mobile: teacherMobile(index),
+      phone: `+91-${teacherMobile(index).slice(0, 5)}-${teacherMobile(index).slice(5)}`,
+      status: TEACHER_STATUSES[index % TEACHER_STATUSES.length],
+      totalStudents: 0,
+      totalTrades: 0,
+      totalCapital: 0,
+      profitLoss: 0,
+      winRate: 0,
+      specialization: TEACHER_SPECIALISATIONS[index % TEACHER_SPECIALISATIONS.length],
       joinedDate: joinedDate.toISOString(),
-      totalStudents: randomInt(5, 30),
-      totalTrades,
-      specialization: randomElement(specializations),
-      winRate,
-      avgProfit: randomFloat(1000, 50000),
-      totalPnL: randomFloat(-10000, 100000),
     };
   });
 }
 
-// Generate Students
-export function generateStudents(teachers: Teacher[]): Student[] {
+function createStudents(teachers: Teacher[]) {
   const students: Student[] = [];
-  let studentId = 1;
+  const studentsByTeacher: StudentMap = {};
+  let studentCounter = 1;
 
-  teachers.forEach((teacher) => {
-    const studentCount = teacher.totalStudents;
-    
-    for (let i = 0; i < studentCount; i++) {
-      const firstName = randomElement(studentFirstNames);
-      const lastName = randomElement(lastNames);
-      const name = `${firstName} ${lastName}`;
-      const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${studentId}@gmail.com`;
-      const phone = `${randomInt(6, 9)}${randomInt(100000000, 999999999)}`;
-      const initialCapital = randomInt(10, 100) * 5000; // 50k to 500k
-      const currentCapital = initialCapital + randomFloat(-initialCapital * 0.3, initialCapital * 0.5);
-      
-      students.push({
-        id: `student-${studentId}`,
+  teachers.forEach((teacher, teacherIndex) => {
+    const allocation = 6 + (teacherIndex % 4);
+    const teacherStudents: Student[] = [];
+
+    for (let idx = 0; idx < allocation; idx++) {
+      const first = STUDENT_FIRST_NAMES[(studentCounter + idx + teacherIndex) % STUDENT_FIRST_NAMES.length];
+      const last = STUDENT_LAST_NAMES[(teacherIndex + idx) % STUDENT_LAST_NAMES.length];
+      const initialCapital = 80000 + ((teacherIndex * 3 + idx * 5) % 10) * 15000;
+      const performanceOffset = ((teacherIndex + idx) % 5) - 2; // -2 to +2
+      const currentCapital = Math.max(
+        45000,
+        initialCapital + performanceOffset * 12000,
+      );
+      const joinDate = new Date(BASE_STUDENT_JOIN.getTime() + (studentCounter + idx) * 7 * DAY);
+      const status: Student['status'] = idx % 7 === 0 ? 'inactive' : 'active';
+
+      const student: Student = {
+        id: `student-${studentCounter}`,
+        name: `${first} ${last}`,
+        email: `${first.toLowerCase()}.${last.toLowerCase()}${studentCounter}@synckaro.com`,
+        mobile: studentMobile(studentCounter),
         teacherId: teacher.id,
-        name,
-        email,
-        phone,
-        status: randomElement(statuses),
+        teacherName: teacher.name,
+        status,
         initialCapital,
         currentCapital,
-        broker: randomElement(['Zerodha', 'Upstox', 'Angel One', 'ICICI Direct', '5Paisa']),
-        riskPercentage: randomInt(1, 5),
-        strategy: randomElement(['Conservative', 'Moderate', 'Aggressive']),
-        joinedDate: randomDate(new Date(teacher.joinedDate), new Date()).toISOString(),
-      });
-      
-      studentId++;
+        profitLoss: Number((currentCapital - initialCapital).toFixed(2)),
+        riskPercentage: 2 + ((teacherIndex + idx) % 4),
+        strategy: STRATEGIES[(teacherIndex + idx) % STRATEGIES.length],
+        joinedDate: joinDate.toISOString(),
+      };
+
+      students.push(student);
+      teacherStudents.push(student);
+      studentCounter++;
     }
+
+    studentsByTeacher[teacher.id] = teacherStudents;
   });
 
-  return students;
+  return { students, studentsByTeacher };
 }
 
-// Generate Trades
-export function generateTrades(teachers: Teacher[], students: Student[]): Trade[] {
+function createTrades(teachers: Teacher[], studentsByTeacher: StudentMap) {
   const trades: Trade[] = [];
-  let tradeId = 1;
+  const tradesByTeacher: TradeMap = {};
+  let tradeCounter = 1;
 
-  teachers.forEach((teacher) => {
-    const teacherStudents = students.filter(s => s.teacherId === teacher.id);
-    const tradeCount = Math.floor(teacher.totalTrades / 2); // Teacher's own trades
-    
-    // Generate teacher's trades
-    for (let i = 0; i < tradeCount; i++) {
-      const stock = randomElement(stocks);
-      const quantity = randomInt(1, 20) * 10;
-      const price = randomFloat(100, 5000);
-      const type = randomElement(tradeTypes);
-      const timestamp = randomDate(new Date(teacher.joinedDate), new Date());
-      
-      trades.push({
-        id: `trade-${tradeId}`,
+  teachers.forEach((teacher, teacherIndex) => {
+    const teacherStudents = studentsByTeacher[teacher.id];
+    const tradeCount = 16 + (teacherIndex % 4) * 4;
+    const teacherTrades: Trade[] = [];
+
+    for (let idx = 0; idx < tradeCount; idx++) {
+      const stock = STOCKS[(teacherIndex * 3 + idx) % STOCKS.length];
+      const quantity = 20 + ((teacherIndex + idx) % 6) * 10;
+      const basePrice = 210 + (teacherIndex * 17 + idx * 11) % 480;
+      const price = Number((basePrice + (idx % 3) * 12.5).toFixed(2));
+      const timestamp = new Date(BASE_TRADE_TIME.getTime() + (teacherIndex * 5 + idx) * 2 * DAY + idx * 3600000);
+      const student = teacherStudents[idx % teacherStudents.length];
+      const pnlSeed = (idx % 3 === 0 ? 1 : idx % 3 === 1 ? -1 : 0.6) * (420 + teacherIndex * 35 + idx * 20);
+      const pnl = Number((pnlSeed / 10).toFixed(2));
+
+      const trade: Trade = {
+        id: `trade-${tradeCounter}`,
         teacherId: teacher.id,
-        studentId: null,
+        teacherName: teacher.name,
+        studentId: student?.id,
+        studentName: student?.name,
         stock,
         quantity,
         price,
-        type,
-        exchange: randomElement(exchanges),
+        type: idx % 2 === 0 ? 'BUY' : 'SELL',
+        exchange: EXCHANGES[(teacherIndex + idx) % EXCHANGES.length],
+        status: TRADE_STATUSES[(teacherIndex + idx) % TRADE_STATUSES.length],
+        executedAt: timestamp.toISOString(),
         createdAt: timestamp.toISOString(),
         timestamp: timestamp.toISOString(),
-        status: randomElement(tradeStatuses),
-        pnl: randomFloat(-5000, 15000),
-      });
-      
-      tradeId++;
+        pnl,
+      };
+
+      trades.push(trade);
+      teacherTrades.push(trade);
+      tradeCounter++;
     }
 
-    // Generate students' copied trades (fewer than teacher)
-    teacherStudents.forEach((student) => {
-      const studentTradeCount = randomInt(5, 20);
-      
-      for (let i = 0; i < studentTradeCount; i++) {
-        const stock = randomElement(stocks);
-        const quantity = randomInt(1, 10) * 5;
-        const price = randomFloat(100, 5000);
-        const type = randomElement(tradeTypes);
-        const timestamp = randomDate(new Date(student.joinedDate), new Date());
-        
-        trades.push({
-          id: `trade-${tradeId}`,
-          teacherId: teacher.id,
-          studentId: student.id,
-          stock,
-          quantity,
-          price,
-          type,
-          exchange: randomElement(exchanges),
-          createdAt: timestamp.toISOString(),
-          timestamp: timestamp.toISOString(),
-          status: randomElement(tradeStatuses),
-          pnl: randomFloat(-2000, 8000),
-        });
-        
-        tradeId++;
-      }
-    });
+    tradesByTeacher[teacher.id] = teacherTrades;
   });
 
-  return trades;
+  return { trades, tradesByTeacher };
 }
 
-// Generate Activity Logs
-export function generateActivityLogs(teachers: Teacher[], students: Student[], trades: Trade[]): ActivityLog[] {
+function generateActivityLogs(
+  teachers: Teacher[],
+  studentsByTeacher: StudentMap,
+  tradesByTeacher: TradeMap,
+): ActivityLog[] {
   const logs: ActivityLog[] = [];
-  let logId = 1;
+  let logCounter = 1;
 
   teachers.forEach((teacher) => {
-    // Teacher joined log
     logs.push({
-      id: `log-${logId++}`,
+      id: `log-${logCounter++}`,
       teacherId: teacher.id,
       action: 'profile_created',
       timestamp: teacher.joinedDate,
-      details: `${teacher.name} joined the platform`,
+      details: `${teacher.name} joined SyncKaro`,
     });
 
-    // Student addition logs
-    const teacherStudents = students.filter(s => s.teacherId === teacher.id);
-    teacherStudents.forEach((student) => {
-      logs.push({
-        id: `log-${logId++}`,
-        teacherId: teacher.id,
-        action: 'student_added',
-        timestamp: student.joinedDate,
-        details: `Added student: ${student.name}`,
-      });
+    logs.push({
+      id: `log-${logCounter++}`,
+      teacherId: teacher.id,
+      action: 'profile_updated',
+      timestamp: new Date(new Date(teacher.joinedDate).getTime() + 5 * DAY).toISOString(),
+      details: `${teacher.name} updated portfolio benchmarks`,
     });
 
-    // Trade logs (sample - not all trades)
-    const teacherTrades = trades.filter(t => t.teacherId === teacher.id).slice(0, 20);
-    teacherTrades.forEach((trade) => {
-      logs.push({
-        id: `log-${logId++}`,
-        teacherId: teacher.id,
-        action: 'trade_executed',
-        timestamp: trade.timestamp,
-        details: `${trade.type} ${trade.quantity} ${trade.stock} @ ₹${trade.price.toFixed(2)} on ${trade.exchange}`,
+    studentsByTeacher[teacher.id]
+      .slice(0, 3)
+      .forEach((student, index) => {
+        const time = new Date(new Date(student.joinedDate).getTime() + index * 3600000);
+        logs.push({
+          id: `log-${logCounter++}`,
+          teacherId: teacher.id,
+          action: 'student_added',
+          timestamp: time.toISOString(),
+          details: `Added student ${student.name}`,
+        });
       });
-    });
 
-    // Random profile updates
-    for (let i = 0; i < randomInt(1, 3); i++) {
-      logs.push({
-        id: `log-${logId++}`,
-        teacherId: teacher.id,
-        action: 'profile_updated',
-        timestamp: randomDate(new Date(teacher.joinedDate), new Date()).toISOString(),
-        details: 'Updated profile information',
+    (tradesByTeacher[teacher.id] ?? [])
+      .slice(0, 6)
+      .forEach((trade) => {
+        logs.push({
+          id: `log-${logCounter++}`,
+          teacherId: teacher.id,
+          action: 'trade_executed',
+          timestamp: trade.timestamp ?? trade.createdAt,
+          details: `${trade.type} ${trade.quantity} ${trade.stock} @ ₹${(trade.price ?? 0).toFixed(2)} (${trade.status})`,
+        });
       });
-    }
   });
 
-  // Sort by timestamp (newest first)
   return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
-// Main function to generate all seed data
 export function generateAllSeedData() {
-  const teachers = generateTeachers();
-  const students = generateStudents(teachers);
-  const trades = generateTrades(teachers, students);
-  const activityLogs = generateActivityLogs(teachers, students, trades);
+  const teachers = createTeachers();
+  const { students, studentsByTeacher } = createStudents(teachers);
+  const { trades, tradesByTeacher } = createTrades(teachers, studentsByTeacher);
+  const activityLogs = generateActivityLogs(teachers, studentsByTeacher, tradesByTeacher);
+
+  teachers.forEach((teacher) => {
+    const teacherStudents = studentsByTeacher[teacher.id] ?? [];
+    const teacherTrades = tradesByTeacher[teacher.id] ?? [];
+
+    const totalCapital = teacherStudents.reduce(
+      (sum, student) => sum + (student.currentCapital ?? 0),
+      0,
+    );
+    const totalPnL = teacherTrades.reduce((sum, trade) => sum + (trade.pnl ?? 0), 0);
+    const wins = teacherTrades.filter((trade) => (trade.pnl ?? 0) > 0).length;
+
+    teacher.totalStudents = teacherStudents.length;
+    teacher.totalCapital = Number(totalCapital.toFixed(2));
+    teacher.profitLoss = Number(totalPnL.toFixed(2));
+    teacher.totalTrades = teacherTrades.length;
+    teacher.winRate = teacherTrades.length ? Math.round((wins / teacherTrades.length) * 100) : 0;
+  });
+
+  const stats = {
+    totalTeachers: teachers.length,
+    totalStudents: students.length,
+    totalTrades: trades.length,
+    totalCapital: Number(
+      teachers.reduce((sum, teacher) => sum + (teacher.totalCapital ?? 0), 0).toFixed(2),
+    ),
+    totalProfitLoss: Number(
+      teachers.reduce((sum, teacher) => sum + (teacher.profitLoss ?? 0), 0).toFixed(2),
+    ),
+    averageWinRate: Number(
+      (
+        teachers.reduce((sum, teacher) => sum + (teacher.winRate ?? 0), 0) /
+        (teachers.length || 1)
+      ).toFixed(2),
+    ),
+  };
+
+  const generatedAt = new Date().toISOString();
 
   return {
     teachers,
     students,
     trades,
     activityLogs,
-    generatedAt: new Date().toISOString(),
+    stats,
+    generatedAt,
   };
 }
 
