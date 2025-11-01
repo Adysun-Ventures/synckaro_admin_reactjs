@@ -6,6 +6,7 @@ import {
   useMemo,
   type ComponentType,
   type ComponentProps,
+  type ChangeEvent,
 } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -44,13 +45,14 @@ import { storage } from "@/lib/storage";
 import { Teacher } from "@/types";
 import { isAuthenticated } from "@/services/authService";
 
-const ITEMS_PER_PAGE = 10;
+const PAGE_SIZE_OPTIONS = [50, 100, 200, 300];
 
 export default function TeachersPage() {
   const router = useRouter();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
@@ -86,17 +88,22 @@ export default function TeachersPage() {
 
   // Paginate teachers
   const paginatedTeachers = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredTeachers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredTeachers, currentPage]);
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredTeachers.slice(startIndex, startIndex + pageSize);
+  }, [filteredTeachers, currentPage, pageSize]);
 
-  const totalPages = Math.ceil(filteredTeachers.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(filteredTeachers.length / pageSize));
   const pageStart =
-    filteredTeachers.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    filteredTeachers.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const pageEnd =
     filteredTeachers.length === 0
       ? 0
-      : Math.min(currentPage * ITEMS_PER_PAGE, filteredTeachers.length);
+      : Math.min(currentPage * pageSize, filteredTeachers.length);
+
+  const footerSummary =
+    filteredTeachers.length === 0
+      ? "No entries to display"
+      : `Showing ${pageStart} to ${pageEnd} of ${filteredTeachers.length} entries`;
 
   const bulkToolbarStatusActions: Array<{
     label: string;
@@ -183,6 +190,17 @@ export default function TeachersPage() {
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
+
+  const handlePageSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextSize = Number(event.target.value);
+    setPageSize(nextSize);
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(filteredTeachers.length / pageSize));
+    setCurrentPage((prev) => (prev > maxPage ? maxPage : prev));
+  }, [filteredTeachers, pageSize]);
 
   // Delete single teacher
   const handleDeleteClick = (teacher: Teacher) => {
@@ -445,18 +463,36 @@ export default function TeachersPage() {
             )}
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
-            <span className="text-xs text-neutral-500">
-              {filteredTeachers.length === 0
-                ? "No entries to display"
-                : `Showing ${pageStart} to ${pageEnd} of ${filteredTeachers.length} entries`}
-            </span>
-            {filteredTeachers.length > 0 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={Math.max(totalPages, 1)}
-                onPageChange={setCurrentPage}
-              />
+          <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-50 px-4 py-3">
+            {filteredTeachers.length === 0 ? (
+              <span className="text-xs text-neutral-500">{footerSummary}</span>
+            ) : (
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+                  <label className="flex items-center gap-1">
+                    <span>Show</span>
+                    <select
+                      value={pageSize}
+                      onChange={handlePageSizeChange}
+                      className="h-8 rounded-md border border-neutral-300 bg-white px-2 text-xs font-medium text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    >
+                      {PAGE_SIZE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    <span>entries</span>
+                  </label>
+                  <span className="text-xs text-neutral-500">{footerSummary}</span>
+                </div>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  className="w-full md:w-auto"
+                />
+              </div>
             )}
           </div>
         </div>

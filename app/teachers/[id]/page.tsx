@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { 
   ArrowLeftIcon, 
@@ -21,6 +21,7 @@ import { CompactTradeRow } from '@/components/teachers/CompactTradeRow';
 import { TradeListHeader } from '@/components/teachers/TradeListHeader';
 import { ConfirmDialog } from '@/components/common/Modal';
 import { EmptyState } from '@/components/common/EmptyState';
+import { Pagination } from '@/components/common/Pagination';
 import { storage } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 import { Teacher, Student, Trade } from '@/types';
@@ -36,6 +37,9 @@ export default function TeacherDetailsPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isReloading, setIsReloading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const TRADES_PER_PAGE = 10;
 
   const statusToneMap: Record<Teacher['status'], 'success' | 'danger' | 'warning'> = {
     active: 'success',
@@ -75,9 +79,9 @@ export default function TeacherDetailsPage() {
         const dateA = new Date(a.timestamp || a.createdAt).getTime();
         const dateB = new Date(b.timestamp || b.createdAt).getTime();
         return dateB - dateA;
-      })
-      .slice(0, 10);
+      });
     setTrades(teacherTrades);
+    setCurrentPage(1);
   }, [teacherId, router]);
 
   useEffect(() => {
@@ -109,6 +113,32 @@ export default function TeacherDetailsPage() {
       setIsReloading(false);
     }, 200);
   };
+
+  const totalTrades = trades.length;
+  const totalPages = Math.max(1, Math.ceil(totalTrades / TRADES_PER_PAGE));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedTrades = useMemo(() => {
+    if (totalTrades === 0) {
+      return [];
+    }
+
+    const startIndex = (currentPage - 1) * TRADES_PER_PAGE;
+    return trades.slice(startIndex, startIndex + TRADES_PER_PAGE);
+  }, [currentPage, trades, totalTrades]);
+
+  const pageStart = totalTrades === 0 ? 0 : (currentPage - 1) * TRADES_PER_PAGE + 1;
+  const pageEnd = totalTrades === 0 ? 0 : Math.min(currentPage * TRADES_PER_PAGE, totalTrades);
+  const entriesSummary =
+    totalTrades === 0
+      ? 'No entries to display'
+      : `Showing ${pageStart} to ${pageEnd} of ${totalTrades} entries`;
+  const pageSummary = totalTrades === 0 ? '' : `Showing page ${currentPage} of ${totalPages}`;
 
   if (!isAuthenticated() || !teacher) {
     return null;
@@ -306,9 +336,23 @@ export default function TeacherDetailsPage() {
             <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white/80 shadow-sm">
               <TradeListHeader />
               <div className="divide-y divide-neutral-100">
-                {trades.map((trade) => (
+                {paginatedTrades.map((trade) => (
                   <CompactTradeRow key={trade.id} trade={trade} />
                 ))}
+              </div>
+              <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-1 text-xs text-neutral-500 md:flex-row md:items-center md:gap-3">
+                  <span>{entriesSummary}</span>
+                  {totalTrades > 0 && <span>{pageSummary}</span>}
+                </div>
+                {totalTrades > 0 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                    className="w-full md:w-auto"
+                  />
+                )}
               </div>
             </div>
           )}
