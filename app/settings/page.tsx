@@ -117,7 +117,7 @@ export default function SettingsPage() {
                 disabled
                 className="w-full h-10 px-3 text-sm font-semibold text-neutral-500 border border-neutral-300 rounded-lg bg-neutral-50 cursor-not-allowed"
               >
-                <option value="light">Light (Coming Soon: Dark Mode)</option>
+                <option value="light">Light</option>
               </select>
             </div>
           </div>
