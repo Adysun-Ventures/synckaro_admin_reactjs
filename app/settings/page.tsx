@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Input } from '@/components/common/Input';
 import { Button } from '@/components/common/Button';
 import { Toggle } from '@/components/common/Toggle';
+import { Card } from '@/components/common/Card';
 import { isAuthenticated, getCurrentUser } from '@/services/authService';
 
 export default function SettingsPage() {
@@ -39,46 +40,47 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout title="Settings">
-      <div className="max-w-4xl space-y-6">
+      <div className="space-y-6">
         {/* Profile Settings */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
+        <Card padding="lg">
           <h2 className="text-lg font-semibold text-neutral-900 mb-6">Profile Settings</h2>
-          <div className="space-y-4">
-            <Input
-              label="Name"
-              value={user?.name || 'Admin'}
-              disabled
-              readOnly
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={user?.email || 'admin@synckaro.com'}
-              disabled
-              readOnly
-            />
-            <Input
-              label="Mobile"
-              type="tel"
-              value={user?.mobile || '9999999999'}
-              disabled
-              readOnly
-            />
-            <div className="pt-2">
-              <Button variant="secondary" disabled>
-                Change Password (Coming Soon)
-              </Button>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div>
+              <Input
+                label="Name"
+                value={user?.name || 'Admin'}
+                disabled
+                readOnly
+              />
+            </div>
+            <div>
+              <Input
+                label="Email"
+                type="email"
+                value={user?.email || 'admin@synckaro.com'}
+                disabled
+                readOnly
+              />
+            </div>
+            <div>
+              <Input
+                label="Mobile"
+                type="tel"
+                value={user?.mobile || '9999999999'}
+                disabled
+                readOnly
+              />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Notification Preferences */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
+        <Card padding="lg">
           <h2 className="text-lg font-semibold text-neutral-900 mb-6">Notification Preferences</h2>
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex flex-col gap-3">
               <div>
-                <h3 className="font-medium text-neutral-900">Email Notifications</h3>
+                <h3 className="font-medium text-neutral-900 mb-1">Email Notifications</h3>
                 <p className="text-sm text-neutral-500">Receive email updates about platform activity</p>
               </div>
               <Toggle
@@ -86,9 +88,9 @@ export default function SettingsPage() {
                 onChange={setEmailNotifications}
               />
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3">
               <div>
-                <h3 className="font-medium text-neutral-900">SMS Notifications</h3>
+                <h3 className="font-medium text-neutral-900 mb-1">SMS Notifications</h3>
                 <p className="text-sm text-neutral-500">Receive SMS alerts for important events</p>
               </div>
               <Toggle
@@ -96,9 +98,9 @@ export default function SettingsPage() {
                 onChange={setSmsNotifications}
               />
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3">
               <div>
-                <h3 className="font-medium text-neutral-900">Trade Alerts</h3>
+                <h3 className="font-medium text-neutral-900 mb-1">Trade Alerts</h3>
                 <p className="text-sm text-neutral-500">Get notified when trades are executed</p>
               </div>
               <Toggle
@@ -107,20 +109,20 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Platform Settings */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6">
+        <Card padding="lg">
           <h2 className="text-lg font-semibold text-neutral-900 mb-6">Platform Settings</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Data Refresh Interval (seconds)
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="block text-xs uppercase tracking-wide text-neutral-500">
+                Data Refresh Interval
               </label>
               <select
                 value={dataRefreshInterval}
                 onChange={(e) => setDataRefreshInterval(e.target.value)}
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full h-10 px-3 text-sm font-semibold text-neutral-900 border border-neutral-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="10">10 seconds</option>
                 <option value="30">30 seconds</option>
@@ -128,32 +130,30 @@ export default function SettingsPage() {
                 <option value="300">5 minutes</option>
               </select>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <div className="flex flex-col gap-2">
+              <label className="block text-xs uppercase tracking-wide text-neutral-500">
                 Default View
               </label>
               <select
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full h-10 px-3 text-sm font-semibold text-neutral-900 border border-neutral-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="dashboard">Dashboard</option>
                 <option value="teachers">Teachers</option>
               </select>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
+            <div className="flex flex-col gap-2">
+              <label className="block text-xs uppercase tracking-wide text-neutral-500">
                 Theme
               </label>
               <select
                 disabled
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg bg-neutral-50 text-neutral-500 cursor-not-allowed"
+                className="w-full h-10 px-3 text-sm font-semibold text-neutral-500 border border-neutral-300 rounded-lg bg-neutral-50 cursor-not-allowed"
               >
                 <option value="light">Light (Coming Soon: Dark Mode)</option>
               </select>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Save Button */}
         <div className="flex items-center gap-4">
@@ -168,7 +168,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-danger-50 border border-danger-200 rounded-xl p-6">
+        <Card tone="danger" padding="lg">
           <h2 className="text-lg font-semibold text-danger-900 mb-2">Danger Zone</h2>
           <p className="text-sm text-danger-700 mb-4">
             Proceed with caution. These actions are irreversible.
@@ -176,7 +176,7 @@ export default function SettingsPage() {
           <Button variant="danger" size="sm" disabled>
             Clear All Data (Disabled)
           </Button>
-        </div>
+        </Card>
       </div>
     </DashboardLayout>
   );
