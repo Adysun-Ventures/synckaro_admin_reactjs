@@ -348,88 +348,90 @@ export default function ReportsPage() {
           </div>
         </Card>
 
-        <Card
-          padding="lg"
-          tone="neutral"
-          hover
-          header={<h3 className="text-lg font-semibold text-neutral-900">Strategy Performance</h3>}
-          footer={<span className="text-xs text-neutral-400">Metrics evaluated across all desks this month.</span>}
-        >
-          <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white/90">
-            <div className="grid grid-cols-[1.5fr_repeat(4,1fr)] gap-3 border-b border-neutral-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
-              <span>Strategy</span>
-              <span className="text-right">Trades</span>
-              <span className="text-right">Hit Rate</span>
-              <span className="text-right">Avg Holding</span>
-              <span className="text-right">Net P&L</span>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card
+            padding="lg"
+            tone="neutral"
+            hover
+            header={<h3 className="text-lg font-semibold text-neutral-900">Strategy Performance</h3>}
+            footer={<span className="text-xs text-neutral-400">Metrics evaluated across all desks this month.</span>}
+          >
+            <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white/90">
+              <div className="grid grid-cols-[1.5fr_repeat(4,1fr)] gap-3 border-b border-neutral-200 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
+                <span>Strategy</span>
+                <span className="text-right">Trades</span>
+                <span className="text-right">Hit Rate</span>
+                <span className="text-right">Avg Holding</span>
+                <span className="text-right">Net P&L</span>
+              </div>
+              <div className="divide-y divide-neutral-100">
+                {strategyPerformance.map((row) => (
+                  <div key={row.segment} className="grid grid-cols-[1.5fr_repeat(4,1fr)] items-center gap-3 px-4 py-3 text-sm">
+                    <span className="font-medium text-neutral-800">{row.segment}</span>
+                    <span className="justify-self-end text-neutral-700">{row.trades}</span>
+                    <span className="justify-self-end text-neutral-700">{row.hitRate}</span>
+                    <span className="justify-self-end text-neutral-700">{row.avgHolding}</span>
+                    <span
+                      className={cn(
+                        'justify-self-end font-semibold',
+                        row.positive ? 'text-success-600' : 'text-danger-600'
+                      )}
+                    >
+                      {row.pnl}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="divide-y divide-neutral-100">
-              {strategyPerformance.map((row) => (
-                <div key={row.segment} className="grid grid-cols-[1.5fr_repeat(4,1fr)] items-center gap-3 px-4 py-3 text-sm">
-                  <span className="font-medium text-neutral-800">{row.segment}</span>
-                  <span className="justify-self-end text-neutral-700">{row.trades}</span>
-                  <span className="justify-self-end text-neutral-700">{row.hitRate}</span>
-                  <span className="justify-self-end text-neutral-700">{row.avgHolding}</span>
-                  <span
-                    className={cn(
-                      'justify-self-end font-semibold',
-                      row.positive ? 'text-success-600' : 'text-danger-600'
-                    )}
+          </Card>
+
+          <Card
+            padding="lg"
+            tone="neutral"
+            hover
+            header={<h3 className="text-lg font-semibold text-neutral-900">Risk & Compliance</h3>}
+          >
+            <div className="flex flex-col gap-3">
+              {riskAlerts.map((alert) => {
+                const badgeStyles = {
+                  info: 'text-neutral-600 bg-neutral-100 border-neutral-200',
+                  warning: 'text-warning-700 bg-warning-50 border-warning-200',
+                  critical: 'text-danger-700 bg-danger-50 border-danger-200',
+                } as const;
+
+                const iconMap = {
+                  info: ShieldCheckIcon,
+                  warning: AdjustmentsHorizontalIcon,
+                  critical: FireIcon,
+                };
+
+                const Icon = iconMap[alert.severity];
+
+                return (
+                  <div
+                    key={alert.title}
+                    className="flex items-start justify-between rounded-xl border border-neutral-200 bg-white/80 px-4 py-3 shadow-sm"
                   >
-                    {row.pnl}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-
-        <Card
-          padding="lg"
-          tone="neutral"
-          hover
-          header={<h3 className="text-lg font-semibold text-neutral-900">Risk & Compliance</h3>}
-        >
-          <div className="flex flex-col gap-3">
-            {riskAlerts.map((alert) => {
-              const badgeStyles = {
-                info: 'text-neutral-600 bg-neutral-100 border-neutral-200',
-                warning: 'text-warning-700 bg-warning-50 border-warning-200',
-                critical: 'text-danger-700 bg-danger-50 border-danger-200',
-              } as const;
-
-              const iconMap = {
-                info: ShieldCheckIcon,
-                warning: AdjustmentsHorizontalIcon,
-                critical: FireIcon,
-              };
-
-              const Icon = iconMap[alert.severity];
-
-              return (
-                <div
-                  key={alert.title}
-                  className="flex items-start justify-between rounded-xl border border-neutral-200 bg-white/80 px-4 py-3 shadow-sm"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-neutral-900">{alert.title}</span>
-                      <span className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium', badgeStyles[alert.severity])}>
-                        <Icon className="h-3.5 w-3.5" />
-                        {alert.severity === 'critical' ? 'Critical' : alert.severity === 'warning' ? 'Warning' : 'Info'}
-                      </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-neutral-900">{alert.title}</span>
+                        <span className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium', badgeStyles[alert.severity])}>
+                          <Icon className="h-3.5 w-3.5" />
+                          {alert.severity === 'critical' ? 'Critical' : alert.severity === 'warning' ? 'Warning' : 'Info'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-neutral-600">{alert.detail}</p>
                     </div>
-                    <p className="text-sm text-neutral-600">{alert.detail}</p>
+                    <div className="text-right text-xs text-neutral-400">
+                      <p>{alert.owner}</p>
+                      <p>{alert.updated}</p>
+                    </div>
                   </div>
-                  <div className="text-right text-xs text-neutral-400">
-                    <p>{alert.owner}</p>
-                    <p>{alert.updated}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
           <Card

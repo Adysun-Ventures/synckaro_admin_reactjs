@@ -70,7 +70,7 @@ export function Card({
 
       <div className={cn('relative flex flex-col gap-4', bleed ? paddingClasses[padding] : '')}>
         {header && (
-          <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-medium text-neutral-700/90">
+          <div className="flex flex-wrap items-center justify-start gap-3 text-sm font-medium text-neutral-700/90">
             {header}
           </div>
         )}
