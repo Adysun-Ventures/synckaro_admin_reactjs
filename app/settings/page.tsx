@@ -41,38 +41,6 @@ export default function SettingsPage() {
   return (
     <DashboardLayout title="Settings">
       <div className="space-y-6">
-        {/* Profile Settings */}
-        <Card padding="lg">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-6">Profile Settings</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div>
-              <Input
-                label="Name"
-                value={user?.name || 'Admin'}
-                disabled
-                readOnly
-              />
-            </div>
-            <div>
-              <Input
-                label="Email"
-                type="email"
-                value={user?.email || 'admin@synckaro.com'}
-                disabled
-                readOnly
-              />
-            </div>
-            <div>
-              <Input
-                label="Mobile"
-                type="tel"
-                value={user?.mobile || '9999999999'}
-                disabled
-                readOnly
-              />
-            </div>
-          </div>
-        </Card>
 
         {/* Notification Preferences */}
         <Card padding="lg">
@@ -156,7 +124,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* Save Button */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-end gap-4">
           <Button onClick={handleSave}>
             Save Changes
           </Button>
@@ -166,17 +134,6 @@ export default function SettingsPage() {
             </span>
           )}
         </div>
-
-        {/* Danger Zone */}
-        <Card tone="danger" padding="lg">
-          <h2 className="text-lg font-semibold text-danger-900 mb-2">Danger Zone</h2>
-          <p className="text-sm text-danger-700 mb-4">
-            Proceed with caution. These actions are irreversible.
-          </p>
-          <Button variant="danger" size="sm" disabled>
-            Clear All Data (Disabled)
-          </Button>
-        </Card>
       </div>
     </DashboardLayout>
   );
