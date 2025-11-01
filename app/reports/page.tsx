@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   BanknotesIcon,
@@ -27,6 +27,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  ReferenceLine,
 } from 'recharts';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -202,11 +203,13 @@ function OrderFlowTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   const buys = payload.find((item: any) => item.dataKey === 'Buys')?.value ?? 0;
   const sells = payload.find((item: any) => item.dataKey === 'Sells')?.value ?? 0;
+  // For diverging chart, Sells will be negative, so take absolute value
+  const sellsAbsolute = Math.abs(sells);
   return (
     <div className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs shadow-md">
       <p className="font-semibold text-neutral-700">{label}</p>
       <p className="text-success-600">Buys: {buys}%</p>
-      <p className="text-danger-600">Sells: {sells}%</p>
+      <p className="text-danger-600">Sells: {sellsAbsolute}%</p>
     </div>
   );
 }
@@ -234,6 +237,17 @@ export default function ReportsPage() {
   if (!isAuthenticated()) {
     return null;
   }
+
+  // Transform data for diverging bar chart (Sells as negative values)
+  const divergingOrderFlowData = useMemo(
+    () =>
+      orderFlowSeries.map((item) => ({
+        label: item.label,
+        Buys: item.Buys,
+        Sells: -item.Sells, // Negative for diverging chart
+      })),
+    []
+  );
 
   return (
     <DashboardLayout title="Reports">
@@ -441,23 +455,33 @@ export default function ReportsPage() {
             header={<h3 className="text-sm font-semibold text-neutral-800">Order Flow Mix</h3>}
           >
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={orderFlowSeries} margin={{ top: 16, right: 16, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <BarChart data={divergingOrderFlowData} layout="vertical" margin={{ top: 16, right: 20, left: 85, bottom: 16 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                 <XAxis
+                  type="number"
+                  domain={[-70, 70]}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#64748b', fontSize: 11 }}
+                  tickCount={5}
+                />
+                <YAxis
+                  type="category"
                   dataKey="label"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                  width={80}
                 />
-                <YAxis hide />
+                <ReferenceLine x={0} stroke="#64748b" strokeWidth={1.5} strokeDasharray="2 2" />
                 <Legend
                   iconType="circle"
                   wrapperStyle={{ fontSize: 12 }}
                   formatter={(value) => <span className="text-neutral-500 capitalize">{value}</span>}
                 />
                 <RechartsTooltip content={<OrderFlowTooltip />} cursor={{ fill: '#e2e8f0', opacity: 0.3 }} />
-                <Bar dataKey="Buys" stackId="orders" fill="#16a34a" radius={[8, 8, 0, 0]} />
-                <Bar dataKey="Sells" stackId="orders" fill="#dc2626" radius={[0, 0, 8, 8]} />
+                <Bar dataKey="Buys" fill="#16a34a" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="Sells" fill="#dc2626" radius={[8, 0, 0, 8]} />
               </BarChart>
             </ResponsiveContainer>
           </Card>
