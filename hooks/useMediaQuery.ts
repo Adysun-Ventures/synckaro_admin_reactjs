@@ -8,7 +8,15 @@ import { useState, useEffect } from 'react';
  * @returns boolean indicating if the query matches
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  // Lazy state initialization - check media query immediately on client-side
+  // This prevents flash by getting correct value on first render
+  const [matches, setMatches] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia(query).matches;
+    }
+    // Default to false for SSR (safe default)
+    return false;
+  });
 
   useEffect(() => {
     // Check if window is defined (client-side)
@@ -16,10 +24,10 @@ export function useMediaQuery(query: string): boolean {
 
     const media = window.matchMedia(query);
     
-    // Set initial value
+    // Update if value changed between initial render and effect (edge case)
     setMatches(media.matches);
 
-    // Create event listener
+    // Create event listener for future changes
     const listener = (event: MediaQueryListEvent) => {
       setMatches(event.matches);
     };
