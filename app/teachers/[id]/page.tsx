@@ -21,7 +21,7 @@ import { CompactTradeRow } from '@/components/teachers/CompactTradeRow';
 import { TradeListHeader } from '@/components/teachers/TradeListHeader';
 import { ConfirmDialog } from '@/components/common/Modal';
 import { EmptyState } from '@/components/common/EmptyState';
-import { Pagination } from '@/components/common/Pagination';
+import { PaginationFooter } from '@/components/common/PaginationFooter';
 import { storage } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 import { Teacher, Student, Trade } from '@/types';
@@ -118,8 +118,7 @@ export default function TeacherDetailsPage() {
   const totalTrades = trades.length;
   const totalPages = Math.max(1, Math.ceil(totalTrades / pageSize));
 
-  const handlePageSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    const nextSize = Number(event.target.value);
+  const handlePageSizeChange = (nextSize: number) => {
     setPageSize(nextSize);
     setCurrentPage(1);
   };
@@ -138,13 +137,6 @@ export default function TeacherDetailsPage() {
     return trades.slice(startIndex, startIndex + pageSize);
   }, [currentPage, trades, totalTrades, pageSize]);
 
-  const pageStart = totalTrades === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-  const pageEnd = totalTrades === 0 ? 0 : Math.min(currentPage * pageSize, totalTrades);
-  const entriesSummary =
-    totalTrades === 0
-      ? 'No entries to display'
-      : `Showing ${pageStart} to ${pageEnd} of ${totalTrades} entries`;
-  const pageSummary = totalTrades === 0 ? '' : `Showing page ${currentPage} of ${totalPages}`;
 
   if (!isAuthenticated() || !teacher) {
     return null;
@@ -346,34 +338,14 @@ export default function TeacherDetailsPage() {
                   <CompactTradeRow key={trade.id} trade={trade} />
                 ))}
               </div>
-              <div className="flex flex-col gap-3 border-t border-neutral-200 bg-neutral-50 px-4 py-3 md:flex-row md:items-center md:justify-between">
-                <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
-                  <label className="flex items-center gap-1">
-                    <span>Show</span>
-                    <select
-                      value={pageSize}
-                      onChange={handlePageSizeChange}
-                      className="h-8 rounded-md border border-neutral-300 bg-white px-2 text-xs font-medium text-neutral-700 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    >
-                      {PAGE_SIZE_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                    <span>entries</span>
-                  </label>
-                  <span>{entriesSummary}</span>
-                </div>
-                {totalTrades > 0 && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
-                    className="w-full md:w-auto"
-                  />
-                )}
-              </div>
+              <PaginationFooter
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalTrades}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={handlePageSizeChange}
+              />
             </div>
           )}
         </div>
