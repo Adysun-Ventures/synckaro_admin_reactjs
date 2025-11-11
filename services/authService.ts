@@ -1,5 +1,6 @@
 import { storage } from '@/lib/storage';
 import { AuthData, OTPVerifyData } from '@/types';
+import apiClient from '@/lib/api';
 
 /**
  * Authentication Service for SyncKaro Admin
@@ -20,22 +21,19 @@ const DUMMY_ADMIN = {
 };
 
 /**
- * Validate Indian mobile number (10 digits)
+ * Validate mobile number (10 digits)
  */
 function isValidMobile(mobile: string): boolean {
-  const mobileRegex = /^[6-9]\d{9}$/;
+  const mobileRegex = /^\d{10}$/;
   return mobileRegex.test(mobile);
 }
 
 /**
  * Send OTP to mobile number
- * @param mobile - 10-digit Indian mobile number
+ * @param mobile - 10-digit mobile number
  * @returns Promise with success status
  */
 export async function sendOTP(mobile: string): Promise<{ success: boolean; error?: string }> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
   // Validate mobile number
   if (!isValidMobile(mobile)) {
     return {
@@ -44,9 +42,39 @@ export async function sendOTP(mobile: string): Promise<{ success: boolean; error
     };
   }
 
-  // In production, this would call the backend API
-  // For now, we just return success for any valid mobile
-  return { success: true };
+  try {
+    // Call the login API endpoint
+    const response = await apiClient.post<{ message: string; otp: string }>(
+      '/common/login',
+      {
+        mobile,
+        role: 'admin',
+      },
+      {
+        skipAuth: true, // Skip auth token for login endpoint
+      }
+    );
+
+    // API returns { message: string, otp: string }
+    if (response.data && response.data.message) {
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      error: 'Failed to send OTP. Please try again.',
+    };
+  } catch (error: any) {
+    // Handle API errors (transformed by axios interceptor)
+    // Error can be ApiErrorResponse from interceptor or raw axios error
+    const errorMessage =
+      error?.error || error?.message || 'Failed to send OTP. Please try again.';
+    
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
 }
 
 /**
@@ -87,7 +115,7 @@ export async function verifyOTP(data: OTPVerifyData): Promise<{ success: boolean
 
 /**
  * Resend OTP to mobile number
- * @param mobile - 10-digit Indian mobile number
+ * @param mobile - 10-digit mobile number
  * @returns Promise with success status
  */
 export async function resendOTP(mobile: string): Promise<{ success: boolean; error?: string }> {
