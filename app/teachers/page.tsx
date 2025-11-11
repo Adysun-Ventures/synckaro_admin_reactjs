@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useMemo,
+  useCallback,
   type ComponentType,
   type ComponentProps,
   type ChangeEvent,
@@ -44,6 +45,7 @@ import {
 import { storage } from "@/lib/storage";
 import { Teacher } from "@/types";
 import { isAuthenticated } from "@/services/authService";
+import apiClient from "@/lib/api";
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200, 300];
 
@@ -60,6 +62,8 @@ export default function TeachersPage() {
   const [bulkStatusConfirm, setBulkStatusConfirm] = useState<
     Teacher["status"] | null
   >(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Check auth
   useEffect(() => {
@@ -68,31 +72,94 @@ export default function TeachersPage() {
     }
   }, [router]);
 
-  // Load teachers from localStorage
+  // Merge API response with localStorage data
+  const mergeTeachersWithLocalStorage = (
+    apiTeachers: Array<{ id: number; name: string; email: string; status: string }>
+  ): Teacher[] => {
+    const localStorageTeachers = (storage.getItem("teachers") || []) as Teacher[];
+    
+    return apiTeachers.map((apiTeacher) => {
+      // Find matching teacher in localStorage by id
+      const localTeacher = localStorageTeachers.find(
+        (t) => t.id === String(apiTeacher.id)
+      );
+
+      // Merge API data with localStorage data
+      return {
+        id: String(apiTeacher.id), // Convert number to string
+        name: apiTeacher.name,
+        email: apiTeacher.email,
+        status: apiTeacher.status as Teacher["status"],
+        // Use localStorage data if available, otherwise use defaults
+        mobile: localTeacher?.mobile || "",
+        phone: localTeacher?.phone,
+        totalStudents: localTeacher?.totalStudents || 0,
+        totalTrades: localTeacher?.totalTrades || 0,
+        totalCapital: localTeacher?.totalCapital,
+        profitLoss: localTeacher?.profitLoss,
+        winRate: localTeacher?.winRate,
+        specialization: localTeacher?.specialization,
+        joinedDate: localTeacher?.joinedDate || new Date().toISOString(),
+      };
+    });
+  };
+
+  // Fetch teachers from API
+  const fetchTeachers = useCallback(async () => {
+    if (!isAuthenticated()) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.post<
+        Array<{ id: number; name: string; email: string; status: string }>
+      >("/admin/teacher/list", {
+        page: currentPage,
+        limit: pageSize,
+        search: searchQuery,
+      });
+
+      if (response.data && Array.isArray(response.data)) {
+        const mergedTeachers = mergeTeachersWithLocalStorage(response.data);
+        setTeachers(mergedTeachers);
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (err: any) {
+      console.error("Error fetching teachers:", err);
+      setError(err?.error || err?.message || "Failed to fetch teachers");
+      
+      // Fallback to localStorage on error
+      const loadedTeachers = storage.getItem("teachers") || [];
+      setTeachers(loadedTeachers as Teacher[]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, pageSize, searchQuery]);
+
+  // Fetch teachers on mount and when dependencies change
   useEffect(() => {
-    const loadedTeachers = storage.getItem("teachers") || [];
-    setTeachers(loadedTeachers);
-  }, []);
+    if (isAuthenticated()) {
+      fetchTeachers();
+    }
+  }, [fetchTeachers]);
 
-  // Filter teachers based on search
+  // Note: API handles search and pagination, so filteredTeachers = teachers (already paginated)
   const filteredTeachers = useMemo(() => {
-    if (!searchQuery.trim()) return teachers;
+    // API returns paginated results, so we use teachers directly
+    return teachers;
+  }, [teachers]);
 
-    const query = searchQuery.toLowerCase();
-    return teachers.filter(
-      (teacher) =>
-        teacher.name.toLowerCase().includes(query) ||
-        teacher.email.toLowerCase().includes(query)
-    );
-  }, [teachers, searchQuery]);
-
-  // Paginate teachers
+  // API already returns paginated data, so paginatedTeachers = teachers
   const paginatedTeachers = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredTeachers.slice(startIndex, startIndex + pageSize);
-  }, [filteredTeachers, currentPage, pageSize]);
+    // API handles pagination, so we use the response directly
+    return teachers;
+  }, [teachers]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredTeachers.length / pageSize));
+  // For total pages, we'll use a default since API doesn't return total count
+  // In a real implementation, API should return { data: [], total: number, page: number, limit: number }
+  const totalPages = Math.max(1, Math.ceil(teachers.length / pageSize));
 
 
   const bulkToolbarStatusActions: Array<{
