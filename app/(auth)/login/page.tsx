@@ -125,6 +125,11 @@ export default function LoginPage() {
                 placeholder="Enter 10-digit mobile number"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && mobile.length === 10 && !loading) {
+                    handleSendOTP();
+                  }
+                }}
                 error={error}
                 maxLength={10}
                 disabled={loading}
