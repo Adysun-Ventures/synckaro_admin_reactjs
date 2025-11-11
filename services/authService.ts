@@ -83,34 +83,65 @@ export async function sendOTP(mobile: string): Promise<{ success: boolean; error
  * @returns Promise with auth data or error
  */
 export async function verifyOTP(data: OTPVerifyData): Promise<{ success: boolean; error?: string; data?: AuthData }> {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-
   const { mobile, otp } = data;
 
-  // Check dummy admin credentials
-  if (mobile === DUMMY_ADMIN.mobile && otp === DUMMY_ADMIN.otp) {
-    const authData: AuthData = {
-      user: DUMMY_ADMIN.user,
-      token: `dummy-token-${Date.now()}`,
-      isAuthenticated: true,
-    };
+  try {
+    // Call the verify API endpoint
+    const response = await apiClient.post<{
+      access_token: string;
+      token_type: string;
+      id: number;
+      role: string;
+    }>(
+      '/common/verify',
+      {
+        mobile,
+        otp,
+      },
+      {
+        skipAuth: true, // Skip auth token for verify endpoint
+      }
+    );
 
-    // Store in localStorage
-    storage.setAuth(authData);
+    // Map API response to AuthData structure
+    const apiResponse = response.data;
+    
+    if (apiResponse && apiResponse.access_token) {
+      const authData: AuthData = {
+        user: {
+          id: String(apiResponse.id),
+          name: mobile, // Use mobile as name fallback (can be updated from profile later)
+          mobile: mobile,
+          role: apiResponse.role as 'admin' | 'teacher' | 'student',
+        },
+        token: apiResponse.access_token,
+        isAuthenticated: true,
+      };
+
+      // Store in localStorage
+      storage.setAuth(authData);
+
+      return {
+        success: true,
+        data: authData,
+      };
+    }
 
     return {
-      success: true,
-      data: authData,
+      success: false,
+      error: 'Invalid response from server. Please try again.',
+    };
+  } catch (error: any) {
+    // Handle API errors (transformed by axios interceptor)
+    // Error can be ApiErrorResponse from interceptor or raw axios error
+    const errorMessage =
+      error?.error || error?.message || 'Invalid OTP. Please try again.';
+    
+    return {
+      success: false,
+      error: errorMessage,
     };
   }
-
-  // In production, this would verify with backend
-  // For now, reject any other credentials
-  return {
-    success: false,
-    error: 'Invalid OTP. Please try again.',
-  };
 }
 
 /**

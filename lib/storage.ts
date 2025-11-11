@@ -1,19 +1,22 @@
 /**
- * LocalStorage wrapper for SyncKaro platform
- * All keys are prefixed with 'syncKaro_' for namespace isolation
+ * LocalStorage wrapper for SyncKaro Admin App
+ * All keys are prefixed with 'synckaro_admin_' for app-specific namespace isolation
+ * This prevents conflicts with teacher/student apps on the same domain
  */
+
+const STORAGE_PREFIX = 'synckaro_admin_';
 
 export const storage = {
   // Auth operations
   setAuth: (data: any) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('syncKaro_auth', JSON.stringify(data));
+      localStorage.setItem(`${STORAGE_PREFIX}auth`, JSON.stringify(data));
     }
   },
   
   getAuth: (): any | null => {
     if (typeof window !== 'undefined') {
-      const data = localStorage.getItem('syncKaro_auth');
+      const data = localStorage.getItem(`${STORAGE_PREFIX}auth`);
       return data ? JSON.parse(data) : null;
     }
     return null;
@@ -21,20 +24,20 @@ export const storage = {
   
   clearAuth: () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('syncKaro_auth');
+      localStorage.removeItem(`${STORAGE_PREFIX}auth`);
     }
   },
   
   // Generic CRUD operations
   setItem: (key: string, value: any) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(`syncKaro_${key}`, JSON.stringify(value));
+      localStorage.setItem(`${STORAGE_PREFIX}${key}`, JSON.stringify(value));
     }
   },
   
   getItem: (key: string): any | null => {
     if (typeof window !== 'undefined') {
-      const data = localStorage.getItem(`syncKaro_${key}`);
+      const data = localStorage.getItem(`${STORAGE_PREFIX}${key}`);
       return data ? JSON.parse(data) : null;
     }
     return null;
@@ -42,7 +45,7 @@ export const storage = {
   
   removeItem: (key: string) => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem(`syncKaro_${key}`);
+      localStorage.removeItem(`${STORAGE_PREFIX}${key}`);
     }
   },
   
@@ -50,7 +53,7 @@ export const storage = {
     if (typeof window !== 'undefined') {
       const keys = Object.keys(localStorage);
       keys.forEach(key => {
-        if (key.startsWith('syncKaro_')) {
+        if (key.startsWith(STORAGE_PREFIX)) {
           localStorage.removeItem(key);
         }
       });
