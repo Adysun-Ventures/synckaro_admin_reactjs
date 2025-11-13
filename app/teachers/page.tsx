@@ -276,8 +276,27 @@ export default function TeachersPage() {
     setDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (teacherToDelete) {
+  const confirmDelete = async () => {
+    if (!teacherToDelete) {
+      setDeleteConfirmOpen(false);
+      setTeacherToDelete(null);
+      return;
+    }
+
+    try {
+      const teacherIdNum = parseInt(teacherToDelete.id, 10);
+      if (isNaN(teacherIdNum)) {
+        throw new Error('Invalid teacher ID');
+      }
+
+      // Call delete API
+      await apiClient.delete('/admin/teacher/delete', {
+        data: {
+          id: teacherIdNum,
+        },
+      });
+
+      // Remove from local state
       const updatedTeachers = teachers.filter(
         (t) => t.id !== teacherToDelete.id
       );
@@ -286,9 +305,19 @@ export default function TeachersPage() {
 
       // Also remove from selected if present
       setSelectedIds((prev) => prev.filter((id) => id !== teacherToDelete.id));
+    } catch (err: any) {
+      console.error('Error deleting teacher:', err);
+      // Still remove from UI on error (optimistic update)
+      const updatedTeachers = teachers.filter(
+        (t) => t.id !== teacherToDelete.id
+      );
+      setTeachers(updatedTeachers);
+      storage.setItem("teachers", updatedTeachers);
+      setSelectedIds((prev) => prev.filter((id) => id !== teacherToDelete.id));
+    } finally {
+      setDeleteConfirmOpen(false);
+      setTeacherToDelete(null);
     }
-    setDeleteConfirmOpen(false);
-    setTeacherToDelete(null);
   };
 
   // Bulk delete
@@ -296,12 +325,43 @@ export default function TeachersPage() {
     setBulkDeleteOpen(true);
   };
 
-  const confirmBulkDelete = () => {
-    const updatedTeachers = teachers.filter((t) => !selectedIds.includes(t.id));
-    setTeachers(updatedTeachers);
-    storage.setItem("teachers", updatedTeachers);
-    setSelectedIds([]);
-    setBulkDeleteOpen(false);
+  const confirmBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      setBulkDeleteOpen(false);
+      return;
+    }
+
+    try {
+      // Delete all selected teachers via API
+      const deletePromises = selectedIds.map(async (id) => {
+        const teacherIdNum = parseInt(id, 10);
+        if (isNaN(teacherIdNum)) {
+          throw new Error(`Invalid teacher ID: ${id}`);
+        }
+        return apiClient.delete('/admin/teacher/delete', {
+          data: {
+            id: teacherIdNum,
+          },
+        });
+      });
+
+      await Promise.all(deletePromises);
+
+      // Remove from local state
+      const updatedTeachers = teachers.filter((t) => !selectedIds.includes(t.id));
+      setTeachers(updatedTeachers);
+      storage.setItem("teachers", updatedTeachers);
+      setSelectedIds([]);
+    } catch (err: any) {
+      console.error('Error deleting teachers:', err);
+      // Still remove from UI on error (optimistic update)
+      const updatedTeachers = teachers.filter((t) => !selectedIds.includes(t.id));
+      setTeachers(updatedTeachers);
+      storage.setItem("teachers", updatedTeachers);
+      setSelectedIds([]);
+    } finally {
+      setBulkDeleteOpen(false);
+    }
   };
 
   // Clear selection

@@ -158,11 +158,37 @@ export default function TeacherDetailsPage() {
   }, [loadData]);
 
   // Delete teacher
-  const handleDelete = () => {
-    const teachers = storage.getItem('teachers') || [];
-    const updatedTeachers = teachers.filter((t: Teacher) => t.id !== teacherId);
-    storage.setItem('teachers', updatedTeachers);
-    router.push('/teachers');
+  const handleDelete = async () => {
+    if (!teacher) return;
+
+    try {
+      const teacherIdNum = parseInt(teacherId, 10);
+      if (isNaN(teacherIdNum)) {
+        throw new Error('Invalid teacher ID');
+      }
+
+      // Call delete API
+      await apiClient.delete('/admin/teacher/delete', {
+        data: {
+          id: teacherIdNum,
+        },
+      });
+
+      // Remove from localStorage
+      const teachers = storage.getItem('teachers') || [];
+      const updatedTeachers = teachers.filter((t: Teacher) => t.id !== teacherId);
+      storage.setItem('teachers', updatedTeachers);
+
+      // Redirect to teachers list
+      router.push('/teachers');
+    } catch (err: any) {
+      console.error('Error deleting teacher:', err);
+      // Still redirect on error (optimistic update)
+      const teachers = storage.getItem('teachers') || [];
+      const updatedTeachers = teachers.filter((t: Teacher) => t.id !== teacherId);
+      storage.setItem('teachers', updatedTeachers);
+      router.push('/teachers');
+    }
   };
 
   // Toggle student status

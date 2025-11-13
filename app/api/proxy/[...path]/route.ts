@@ -92,9 +92,9 @@ async function handleRequest(
     // Construct full backend URL
     const backendUrl = `${BACKEND_API_URL}${urlWithQuery}`;
 
-    // Get request body (if any)
+    // Get request body (if any) - DELETE requests can also have a body
     let body: any = null;
-    if (method !== 'GET' && method !== 'DELETE') {
+    if (method !== 'GET') {
       try {
         body = await request.json();
       } catch {
