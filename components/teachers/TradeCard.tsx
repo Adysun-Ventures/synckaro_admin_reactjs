@@ -7,10 +7,12 @@ interface TradeCardProps {
 
 export function TradeCard({ trade }: TradeCardProps) {
   const isBuy = trade.type === 'BUY';
-  const statusColors = {
+  const statusColors: Record<Trade['status'], string> = {
     pending: 'bg-warning-100 text-warning-700',
     executed: 'bg-success-100 text-success-700',
+    completed: 'bg-success-100 text-success-700',
     failed: 'bg-danger-100 text-danger-700',
+    cancelled: 'bg-neutral-100 text-neutral-700',
   };
 
   const formatDate = (dateStr: string) => {

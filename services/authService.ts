@@ -1,6 +1,7 @@
 import { storage } from '@/lib/storage';
 import { AuthData, OTPVerifyData } from '@/types';
 import apiClient from '@/lib/api';
+import { CustomAxiosRequestConfig } from '@/lib/api/types';
 
 /**
  * Authentication Service for SyncKaro Admin
@@ -52,7 +53,7 @@ export async function sendOTP(mobile: string): Promise<{ success: boolean; error
       },
       {
         skipAuth: true, // Skip auth token for login endpoint
-      }
+      } as CustomAxiosRequestConfig
     );
 
     // API returns { message: string, otp: string }
@@ -100,7 +101,7 @@ export async function verifyOTP(data: OTPVerifyData): Promise<{ success: boolean
       },
       {
         skipAuth: true, // Skip auth token for verify endpoint
-      }
+      } as CustomAxiosRequestConfig
     );
 
     // Map API response to AuthData structure

@@ -97,3 +97,12 @@ export interface ConnectionRequest {
   respondedAt?: string;
 }
 
+// Activity Log Types
+export interface ActivityLog {
+  id: string;
+  teacherId: string;
+  action: 'profile_created' | 'profile_updated' | 'student_added' | 'trade_executed';
+  timestamp: string;
+  details: string;
+}
+

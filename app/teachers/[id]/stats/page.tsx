@@ -57,12 +57,12 @@ export default function TeacherStatsPage() {
 
   // Calculate stats
   const totalTrades = trades.length;
-  const winningTrades = trades.filter(t => t.pnl > 0).length;
-  const losingTrades = trades.filter(t => t.pnl < 0).length;
+  const winningTrades = trades.filter(t => (t.pnl ?? 0) > 0).length;
+  const losingTrades = trades.filter(t => (t.pnl ?? 0) < 0).length;
   const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
-  const totalPnL = trades.reduce((sum, t) => sum + t.pnl, 0);
+  const totalPnL = trades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
   const avgTradeValue = totalTrades > 0 
-    ? trades.reduce((sum, t) => sum + (t.price * t.quantity), 0) / totalTrades 
+    ? trades.reduce((sum, t) => sum + ((t.price ?? 0) * t.quantity), 0) / totalTrades 
     : 0;
 
   // Most traded stock
@@ -76,19 +76,32 @@ export default function TeacherStatsPage() {
   // Best and worst performing days
   const dailyPnL: Record<string, number> = {};
   trades.forEach(t => {
-    const date = new Date(t.timestamp).toLocaleDateString('en-IN');
-    dailyPnL[date] = (dailyPnL[date] || 0) + t.pnl;
+    const timestamp = t.timestamp ?? t.createdAt;
+    if (!timestamp) return;
+    const date = new Date(timestamp).toLocaleDateString('en-IN');
+    dailyPnL[date] = (dailyPnL[date] || 0) + (t.pnl ?? 0);
   });
   const sortedDays = Object.entries(dailyPnL).sort((a, b) => b[1] - a[1]);
   const bestDay = sortedDays[0] || ['N/A', 0];
   const worstDay = sortedDays[sortedDays.length - 1] || ['N/A', 0];
 
   // Top students by P&L
-  const studentsWithPnL = students.map(s => ({
-    ...s,
-    pnl: s.currentCapital - s.initialCapital,
-    pnlPercentage: ((s.currentCapital - s.initialCapital) / s.initialCapital) * 100,
-  })).sort((a, b) => b.pnl - a.pnl).slice(0, 10);
+  const studentsWithPnL = students
+    .map(s => {
+      const currentCapital = s.currentCapital ?? 0;
+      const initialCapital = s.initialCapital ?? 0;
+      const pnl = currentCapital - initialCapital;
+      const pnlPercentage = initialCapital > 0 ? ((pnl / initialCapital) * 100) : 0;
+      return {
+        ...s,
+        currentCapital,
+        initialCapital,
+        pnl,
+        pnlPercentage,
+      };
+    })
+    .sort((a, b) => b.pnl - a.pnl)
+    .slice(0, 10);
 
   // Active students count
   const activeStudents = students.filter(s => s.status === 'active').length;
