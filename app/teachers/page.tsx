@@ -72,34 +72,46 @@ export default function TeachersPage() {
     }
   }, [router]);
 
-  // Merge API response with localStorage data
+  // Merge API response with localStorage and apply default dummy values
   const mergeTeachersWithLocalStorage = (
     apiTeachers: Array<{ id: number; name: string; email: string; status: string }>
   ): Teacher[] => {
     const localStorageTeachers = (storage.getItem("teachers") || []) as Teacher[];
-    
+
+    // Hardcoded default dummy values for optional fields
+    const defaultValues = {
+      mobile: "",
+      phone: "0000000000",
+      totalStudents: 0,
+      totalTrades: 0,
+      totalCapital: 0,
+      profitLoss: 0,
+      winRate: 0,
+      specialization: "General Trading",
+      joinedDate: new Date().toISOString(),
+    };
+
     return apiTeachers.map((apiTeacher) => {
       // Find matching teacher in localStorage by id
       const localTeacher = localStorageTeachers.find(
         (t) => t.id === String(apiTeacher.id)
       );
 
-      // Merge API data with localStorage data
+      // Merge: API data > localStorage data > default dummy values
       return {
         id: String(apiTeacher.id), // Convert number to string
         name: apiTeacher.name,
         email: apiTeacher.email,
         status: apiTeacher.status as Teacher["status"],
-        // Use localStorage data if available, otherwise use defaults
-        mobile: localTeacher?.mobile || "",
-        phone: localTeacher?.phone,
-        totalStudents: localTeacher?.totalStudents || 0,
-        totalTrades: localTeacher?.totalTrades || 0,
-        totalCapital: localTeacher?.totalCapital,
-        profitLoss: localTeacher?.profitLoss,
-        winRate: localTeacher?.winRate,
-        specialization: localTeacher?.specialization,
-        joinedDate: localTeacher?.joinedDate || new Date().toISOString(),
+        mobile: localTeacher?.mobile || defaultValues.mobile,
+        phone: localTeacher?.phone || defaultValues.phone,
+        totalStudents: localTeacher?.totalStudents ?? defaultValues.totalStudents,
+        totalTrades: localTeacher?.totalTrades ?? defaultValues.totalTrades,
+        totalCapital: localTeacher?.totalCapital ?? defaultValues.totalCapital,
+        profitLoss: localTeacher?.profitLoss ?? defaultValues.profitLoss,
+        winRate: localTeacher?.winRate ?? defaultValues.winRate,
+        specialization: localTeacher?.specialization || defaultValues.specialization,
+        joinedDate: localTeacher?.joinedDate || defaultValues.joinedDate,
       };
     });
   };
@@ -129,7 +141,7 @@ export default function TeachersPage() {
     } catch (err: any) {
       console.error("Error fetching teachers:", err);
       setError(err?.error || err?.message || "Failed to fetch teachers");
-      
+
       // Fallback to localStorage on error
       const loadedTeachers = storage.getItem("teachers") || [];
       setTeachers(loadedTeachers as Teacher[]);
