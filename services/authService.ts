@@ -57,7 +57,7 @@ export async function sendOTP(mobile: string): Promise<{ success: boolean; error
 
     // API returns { message: string, otp: string }
     if (response.data && response.data.message) {
-      return { success: true };
+  return { success: true };
     }
 
     return {
@@ -107,7 +107,7 @@ export async function verifyOTP(data: OTPVerifyData): Promise<{ success: boolean
     const apiResponse = response.data;
     
     if (apiResponse && apiResponse.access_token) {
-      const authData: AuthData = {
+    const authData: AuthData = {
         user: {
           id: String(apiResponse.id),
           name: mobile, // Use mobile as name fallback (can be updated from profile later)
@@ -115,17 +115,17 @@ export async function verifyOTP(data: OTPVerifyData): Promise<{ success: boolean
           role: apiResponse.role as 'admin' | 'teacher' | 'student',
         },
         token: apiResponse.access_token,
-        isAuthenticated: true,
-      };
+      isAuthenticated: true,
+    };
 
-      // Store in localStorage
-      storage.setAuth(authData);
+    // Store in localStorage
+    storage.setAuth(authData);
 
-      return {
-        success: true,
-        data: authData,
-      };
-    }
+    return {
+      success: true,
+      data: authData,
+    };
+  }
 
     return {
       success: false,
@@ -137,10 +137,10 @@ export async function verifyOTP(data: OTPVerifyData): Promise<{ success: boolean
     const errorMessage =
       error?.error || error?.message || 'Invalid OTP. Please try again.';
     
-    return {
-      success: false,
+  return {
+    success: false,
       error: errorMessage,
-    };
+  };
   }
 }
 

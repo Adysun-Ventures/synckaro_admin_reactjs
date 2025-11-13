@@ -315,8 +315,8 @@ export default function TeachersPage() {
       storage.setItem("teachers", updatedTeachers);
       setSelectedIds((prev) => prev.filter((id) => id !== teacherToDelete.id));
     } finally {
-      setDeleteConfirmOpen(false);
-      setTeacherToDelete(null);
+    setDeleteConfirmOpen(false);
+    setTeacherToDelete(null);
     }
   };
 
@@ -355,12 +355,12 @@ export default function TeachersPage() {
     } catch (err: any) {
       console.error('Error deleting teachers:', err);
       // Still remove from UI on error (optimistic update)
-      const updatedTeachers = teachers.filter((t) => !selectedIds.includes(t.id));
-      setTeachers(updatedTeachers);
-      storage.setItem("teachers", updatedTeachers);
-      setSelectedIds([]);
+    const updatedTeachers = teachers.filter((t) => !selectedIds.includes(t.id));
+    setTeachers(updatedTeachers);
+    storage.setItem("teachers", updatedTeachers);
+    setSelectedIds([]);
     } finally {
-      setBulkDeleteOpen(false);
+    setBulkDeleteOpen(false);
     }
   };
 
