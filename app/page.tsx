@@ -58,6 +58,7 @@ type DashboardData = {
   reportHighlights: ReportHighlight[];
   reportBreakdown: ReportBreakdownItem[];
   insightCards: InsightCard[];
+  lastUpdated: string;
 };
 
 export default function DashboardPage() {
@@ -238,6 +239,7 @@ export default function DashboardPage() {
           reportHighlights: mappedReportHighlights,
           reportBreakdown: mappedReportBreakdown,
           insightCards: mappedInsightCards,
+          lastUpdated: apiData.last_updated,
         });
       } else {
         throw new Error('Invalid response format');
@@ -441,6 +443,20 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout title="Dashboard">
+      {/* Last Updated */}
+      {dashboardData?.lastUpdated && (
+        <div className="flex justify-end mb-4">
+          <div className="text-sm text-neutral-500">
+            Last updated: {new Date(dashboardData.lastUpdated).toLocaleString('en-IN', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            }).replace('am', 'AM').replace('pm', 'PM')}
+          </div>
+        </div>
+      )}
       {/* Welcome Card */}
       <div className="bg-primary-600 rounded-xl p-6 mb-6 text-white">
         <h2 className="text-2xl font-semibold mb-2">
