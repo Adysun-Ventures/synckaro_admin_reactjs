@@ -26,6 +26,7 @@ import { storage } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 import { Teacher, Student, Trade } from '@/types';
 import { isAuthenticated } from '@/services/authService';
+import apiClient from '@/lib/api';
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200, 300];
 
@@ -41,6 +42,8 @@ export default function TeacherDetailsPage() {
   const [isReloading, setIsReloading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const statusToneMap: Record<Teacher['status'], 'success' | 'danger' | 'warning'> = {
     active: 'success',
@@ -58,17 +61,82 @@ export default function TeacherDetailsPage() {
     }
   }, [router]);
 
-  const loadData = useCallback(() => {
-    const teachers = storage.getItem('teachers') || [];
-    const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
-    
-    if (!foundTeacher) {
-      router.push('/teachers');
-      return;
-    }
-    
-    setTeacher(foundTeacher);
+  const loadData = useCallback(async () => {
+    if (!isAuthenticated()) return;
 
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Fetch teacher from API
+      const teacherIdNum = parseInt(teacherId, 10);
+      if (isNaN(teacherIdNum)) {
+        throw new Error('Invalid teacher ID');
+      }
+
+      const response = await apiClient.post<{
+        status: string;
+        data: { id: number; name: string; email: string };
+      }>('/admin/teacher/view', {
+        id: teacherIdNum,
+      });
+
+      if (response.data && response.data.data) {
+        // Get teacher from localStorage (dummy seed data)
+        const teachers = storage.getItem('teachers') || [];
+        const localTeacher = teachers.find((t: Teacher) => t.id === teacherId);
+
+        if (!localTeacher) {
+          // If not found in localStorage, create minimal teacher object
+          const mergedTeacher: Teacher = {
+            id: String(response.data.data.id),
+            name: response.data.data.name, // From API
+            email: response.data.data.email, // From API
+            status: response.data.status as Teacher['status'], // From API
+            mobile: '',
+            phone: undefined,
+            totalStudents: 0,
+            totalTrades: 0,
+            totalCapital: undefined,
+            profitLoss: undefined,
+            winRate: undefined,
+            specialization: undefined,
+            joinedDate: new Date().toISOString(),
+          };
+          setTeacher(mergedTeacher);
+        } else {
+          // Merge: Use name, email, status from API, keep everything else from localStorage
+          const mergedTeacher: Teacher = {
+            ...localTeacher,
+            name: response.data.data.name, // From API
+            email: response.data.data.email, // From API
+            status: response.data.status as Teacher['status'], // From API
+            id: String(response.data.data.id), // Ensure ID matches API
+          };
+          setTeacher(mergedTeacher);
+        }
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err: any) {
+      console.error('Error fetching teacher:', err);
+      setError(err?.error || err?.message || 'Failed to fetch teacher');
+
+      // Fallback to localStorage on error
+      const teachers = storage.getItem('teachers') || [];
+      const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
+
+      if (!foundTeacher) {
+        router.push('/teachers');
+        return;
+      }
+
+      setTeacher(foundTeacher);
+    } finally {
+      setLoading(false);
+    }
+
+    // Load students and trades from localStorage (dummy seed data)
     const allStudents = storage.getItem('students') || [];
     const teacherStudents = allStudents.filter((s: Student) => s.teacherId === teacherId);
     setStudents(teacherStudents);
