@@ -10,6 +10,7 @@ import { storage } from '@/lib/storage';
 import { Teacher, Student, Trade } from '@/types';
 import { isAuthenticated } from '@/services/authService';
 import { cn } from '@/lib/utils';
+import apiClient from '@/lib/api';
 
 export default function TeacherStatsPage() {
   const router = useRouter();
@@ -20,6 +21,38 @@ export default function TeacherStatsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
   const [isReloading, setIsReloading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Stats from API
+  const [performanceStats, setPerformanceStats] = useState<{
+    totalTrades: number;
+    wins: number;
+    losses: number;
+    winRate: number;
+    totalPnL: number;
+    activeStudents: number;
+    totalStudents: number;
+  } | null>(null);
+  
+  const [performanceMetrics, setPerformanceMetrics] = useState<{
+    averageTradeValue: number;
+    mostTradedStock: string;
+    specialization: string;
+    bestPerformingDay: { pnl: number; date: string };
+    worstPerformingDay: { pnl: number; date: string };
+    averagePnlPerTrade: number;
+  } | null>(null);
+  
+  const [topStudentsByPnL, setTopStudentsByPnL] = useState<Array<{
+    student_id: number;
+    rank: number;
+    student_name: string;
+    initial_capital: number;
+    current_capital: number;
+    pnl: number;
+    pnl_percentage: string;
+  }>>([]);
 
   // Check auth
   useEffect(() => {
@@ -28,235 +61,232 @@ export default function TeacherStatsPage() {
     }
   }, [router]);
 
-  // Load data
-  const loadData = useCallback(() => {
-    const teachers = storage.getItem('teachers') || [];
-    const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
-    
-    if (!foundTeacher) {
-      router.push('/teachers');
-      return;
-    }
-    
-    setTeacher(foundTeacher);
+  // Load data from API
+  const loadData = useCallback(async () => {
+    if (!isAuthenticated()) return;
 
-    // Load students
-    const allStudents = storage.getItem('students') || [];
-    let teacherStudents = allStudents.filter((s: Student) => s.teacherId === teacherId);
-    
-    // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides students data
-    // Hardcoded fallback data if no students found
-    if (teacherStudents.length === 0) {
-      teacherStudents = [
-        {
-          id: 'student-1',
-          name: 'Rahul Verma',
-          email: 'rahul.verma@synckaro.com',
-          mobile: '9876543210',
-          teacherId: teacherId,
-          teacherName: foundTeacher.name,
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Parse teacher_id as number
+      const teacherIdNum = parseInt(teacherId, 10);
+      if (isNaN(teacherIdNum)) {
+        throw new Error('Invalid teacher ID');
+      }
+
+      // Fetch teacher stats from API
+      const response = await apiClient.post<{
+        status: boolean;
+        data: {
+          teacher: {
+            teacher_id: number;
+            teacher_name: string;
+            performance_statistics: {
+              total_trades: {
+                count: number;
+                wins: number;
+                losses: number;
+              };
+              win_rate: string;
+              winning_trades: number;
+              total_pnl: number;
+              active_students: {
+                count: number;
+                total: number;
+              };
+            };
+            performance_metrics: {
+              average_trade_value: number;
+              most_traded_stock: string;
+              specialization: string;
+              best_performing_day: {
+                pnl: number;
+                date: string;
+              };
+              worst_performing_day: {
+                pnl: number;
+                date: string;
+              };
+              average_pnl_per_trade: number;
+            };
+            top_students_by_pnl: Array<{
+              student_id: number;
+              rank: number;
+              student_name: string;
+              initial_capital: number;
+              current_capital: number;
+              pnl: number;
+              pnl_percentage: string;
+            }>;
+          };
+        };
+      }>('/admin/teacher/stats', {
+        teacher_id: teacherIdNum,
+      });
+
+      if (response.data && response.data.status && response.data.data) {
+        const { teacher: teacherData } = response.data.data;
+
+        // Set teacher info
+        const teachers = storage.getItem('teachers') || [];
+        const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId) || {
+          id: teacherId,
+          name: teacherData.teacher_name,
+          email: '',
+          mobile: '',
+          doj: '',
           status: 'active' as const,
-          initialCapital: 120000,
-          currentCapital: 145000,
-          profitLoss: 25000,
-          riskPercentage: 3,
+          totalStudents: teacherData.performance_statistics.active_students.total,
+          totalTrades: teacherData.performance_statistics.total_trades.count,
+          specialization: teacherData.performance_metrics.specialization,
+          joinedDate: new Date().toISOString(),
+        };
+        setTeacher(foundTeacher);
+
+        // Set performance statistics
+        const stats = teacherData.performance_statistics;
+        const winRateNum = parseFloat(stats.win_rate.replace('%', '')) || 0;
+        setPerformanceStats({
+          totalTrades: stats.total_trades.count,
+          wins: stats.total_trades.wins,
+          losses: stats.total_trades.losses,
+          winRate: winRateNum,
+          totalPnL: stats.total_pnl,
+          activeStudents: stats.active_students.count,
+          totalStudents: stats.active_students.total,
+        });
+
+        // Set performance metrics
+        setPerformanceMetrics({
+          averageTradeValue: teacherData.performance_metrics.average_trade_value,
+          mostTradedStock: teacherData.performance_metrics.most_traded_stock,
+          specialization: teacherData.performance_metrics.specialization,
+          bestPerformingDay: teacherData.performance_metrics.best_performing_day,
+          worstPerformingDay: teacherData.performance_metrics.worst_performing_day,
+          averagePnlPerTrade: teacherData.performance_metrics.average_pnl_per_trade,
+        });
+
+        // Set top students
+        setTopStudentsByPnL(teacherData.top_students_by_pnl || []);
+
+        // Convert top students to Student format for compatibility
+        const studentsData: Student[] = teacherData.top_students_by_pnl.map((s) => ({
+          id: String(s.student_id),
+          name: s.student_name,
+          email: '',
+          mobile: '',
+          teacherId: teacherId,
+          teacherName: teacherData.teacher_name,
+          status: 'active' as const,
+          initialCapital: s.initial_capital,
+          currentCapital: s.current_capital,
+          profitLoss: s.pnl,
+          riskPercentage: 0,
           strategy: 'Moderate',
-          joinedDate: new Date('2024-01-15').toISOString(),
-        },
-        {
-          id: 'student-2',
-          name: 'Pooja Nair',
-          email: 'pooja.nair@synckaro.com',
-          mobile: '9876543211',
-          teacherId: teacherId,
-          teacherName: foundTeacher.name,
-          status: 'active' as const,
-          initialCapital: 90000,
-          currentCapital: 105000,
-          profitLoss: 15000,
-          riskPercentage: 2,
-          strategy: 'Conservative',
-          joinedDate: new Date('2024-02-10').toISOString(),
-        },
-        {
-          id: 'student-3',
-          name: 'Amit Patel',
-          email: 'amit.patel@synckaro.com',
-          mobile: '9876543212',
-          teacherId: teacherId,
-          teacherName: foundTeacher.name,
-          status: 'active' as const,
-          initialCapital: 150000,
-          currentCapital: 138000,
-          profitLoss: -12000,
-          riskPercentage: 4,
-          strategy: 'Aggressive',
-          joinedDate: new Date('2024-01-20').toISOString(),
-        },
-      ];
-    }
-    setStudents(teacherStudents);
+          joinedDate: new Date().toISOString(),
+        }));
+        setStudents(studentsData);
 
-    // Load trades
-    const allTrades = storage.getItem('trades') || [];
-    let teacherTrades = allTrades.filter((t: Trade) => t.teacherId === teacherId);
-    
-    // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides trades data
-    // Hardcoded fallback data if no trades found
-    if (teacherTrades.length === 0) {
-      const now = new Date();
-      teacherTrades = [
-        {
-          id: 'trade-1',
-          teacherId: teacherId,
-          teacherName: foundTeacher.name,
-          studentId: teacherStudents[0]?.id,
-          studentName: teacherStudents[0]?.name,
-          stock: 'INFY',
-          quantity: 30,
-          price: 1610.5,
-          type: 'BUY' as const,
-          exchange: 'NSE' as const,
-          status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: 4500,
-        },
-        {
-          id: 'trade-2',
-          teacherId: teacherId,
-          teacherName: foundTeacher.name,
-          studentId: teacherStudents[1]?.id,
-          studentName: teacherStudents[1]?.name,
-          stock: 'TCS',
-          quantity: 20,
-          price: 3680.0,
-          type: 'SELL' as const,
-          exchange: 'BSE' as const,
-          status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: 3200,
-        },
-        {
-          id: 'trade-3',
-          teacherId: teacherId,
-          teacherName: foundTeacher.name,
-          studentId: teacherStudents[2]?.id,
-          studentName: teacherStudents[2]?.name,
-          stock: 'RELIANCE',
-          quantity: 15,
-          price: 2450.0,
-          type: 'BUY' as const,
-          exchange: 'NSE' as const,
-          status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: -1800,
-        },
-        {
-          id: 'trade-4',
-          teacherId: teacherId,
-          teacherName: foundTeacher.name,
-          studentId: teacherStudents[0]?.id,
-          studentName: teacherStudents[0]?.name,
-          stock: 'HDFCBANK',
-          quantity: 25,
-          price: 1680.0,
-          type: 'SELL' as const,
-          exchange: 'NSE' as const,
-          status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: 2800,
-        },
-        {
-          id: 'trade-5',
-          teacherId: teacherId,
-          teacherName: foundTeacher.name,
-          studentId: teacherStudents[1]?.id,
-          studentName: teacherStudents[1]?.name,
-          stock: 'ICICIBANK',
-          quantity: 35,
-          price: 1120.0,
-          type: 'BUY' as const,
-          exchange: 'BSE' as const,
-          status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: 2100,
-        },
-      ];
+        // Set empty trades array (API doesn't return trades)
+        setTrades([]);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err: any) {
+      console.error('Error fetching teacher stats:', err);
+      setError(err?.error || err?.message || 'Failed to fetch teacher statistics');
+
+      // Fallback to localStorage on error
+      const teachers = storage.getItem('teachers') || [];
+      const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
+      
+      if (!foundTeacher) {
+        router.push('/teachers');
+        return;
+      }
+      
+      setTeacher(foundTeacher);
+    } finally {
+      setLoading(false);
     }
-    setTrades(teacherTrades);
   }, [teacherId, router]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleReload = () => {
+  const handleReload = async () => {
     setIsReloading(true);
-    setTimeout(() => {
-      loadData();
+    try {
+      await loadData();
+    } finally {
       setIsReloading(false);
-    }, 200);
+    }
   };
 
   if (!isAuthenticated() || !teacher) {
     return null;
   }
 
-  // Calculate stats
-  const totalTrades = trades.length;
-  const winningTrades = trades.filter(t => (t.pnl ?? 0) > 0).length;
-  const losingTrades = trades.filter(t => (t.pnl ?? 0) < 0).length;
-  const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
-  const totalPnL = trades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
-  const avgTradeValue = totalTrades > 0 
-    ? trades.reduce((sum, t) => sum + ((t.price ?? 0) * t.quantity), 0) / totalTrades 
-    : 0;
+  // Use stats from API if available, otherwise calculate from local data
+  const totalTrades = performanceStats?.totalTrades ?? trades.length;
+  const winningTrades = performanceStats?.wins ?? trades.filter(t => (t.pnl ?? 0) > 0).length;
+  const losingTrades = performanceStats?.losses ?? trades.filter(t => (t.pnl ?? 0) < 0).length;
+  const winRate = performanceStats?.winRate ?? (totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0);
+  const totalPnL = performanceStats?.totalPnL ?? trades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
+  const avgTradeValue = performanceMetrics?.averageTradeValue ?? (
+    totalTrades > 0 
+      ? trades.reduce((sum, t) => sum + ((t.price ?? 0) * t.quantity), 0) / totalTrades 
+      : 0
+  );
 
   // Most traded stock
-  const stockCounts: Record<string, number> = {};
-  trades.forEach(t => {
-    stockCounts[t.stock] = (stockCounts[t.stock] || 0) + 1;
-  });
-  const mostTradedStock = Object.entries(stockCounts)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+  const mostTradedStock = performanceMetrics?.mostTradedStock ?? 'N/A';
 
   // Best and worst performing days
-  const dailyPnL: Record<string, number> = {};
-  trades.forEach(t => {
-    const timestamp = t.timestamp ?? t.createdAt;
-    if (!timestamp) return;
-    const date = new Date(timestamp).toLocaleDateString('en-IN');
-    dailyPnL[date] = (dailyPnL[date] || 0) + (t.pnl ?? 0);
-  });
-  const sortedDays = Object.entries(dailyPnL).sort((a, b) => b[1] - a[1]);
-  const bestDay = sortedDays[0] || ['N/A', 0];
-  const worstDay = sortedDays[sortedDays.length - 1] || ['N/A', 0];
+  const bestDay = performanceMetrics?.bestPerformingDay 
+    ? { date: performanceMetrics.bestPerformingDay.date, pnl: performanceMetrics.bestPerformingDay.pnl }
+    : { date: 'N/A', pnl: 0 };
+  const worstDay = performanceMetrics?.worstPerformingDay
+    ? { date: performanceMetrics.worstPerformingDay.date, pnl: performanceMetrics.worstPerformingDay.pnl }
+    : { date: 'N/A', pnl: 0 };
 
-  // Top students by P&L
-  const studentsWithPnL = students
-    .map(s => {
-      const currentCapital = s.currentCapital ?? 0;
-      const initialCapital = s.initialCapital ?? 0;
-      const pnl = currentCapital - initialCapital;
-      const pnlPercentage = initialCapital > 0 ? ((pnl / initialCapital) * 100) : 0;
-      return {
-        ...s,
-        currentCapital,
-        initialCapital,
-        pnl,
-        pnlPercentage,
-      };
-    })
-    .sort((a, b) => b.pnl - a.pnl)
-    .slice(0, 10);
+  // Top students by P&L - use API data if available
+  const studentsWithPnL = topStudentsByPnL.length > 0
+    ? topStudentsByPnL.map((s) => ({
+        id: String(s.student_id),
+        name: s.student_name,
+        email: '',
+        mobile: '',
+        teacherId: teacherId,
+        teacherName: teacher?.name || '',
+        status: 'active' as const,
+        initialCapital: s.initial_capital,
+        currentCapital: s.current_capital,
+        pnl: s.pnl,
+        pnlPercentage: parseFloat(s.pnl_percentage.replace('%', '')) || 0,
+      }))
+    : students
+        .map(s => {
+          const currentCapital = s.currentCapital ?? 0;
+          const initialCapital = s.initialCapital ?? 0;
+          const pnl = currentCapital - initialCapital;
+          const pnlPercentage = initialCapital > 0 ? ((pnl / initialCapital) * 100) : 0;
+          return {
+            ...s,
+            currentCapital,
+            initialCapital,
+            pnl,
+            pnlPercentage,
+          };
+        })
+        .sort((a, b) => b.pnl - a.pnl)
+        .slice(0, 10);
 
   // Active students count
-  const activeStudents = students.filter(s => s.status === 'active').length;
+  const activeStudents = performanceStats?.activeStudents ?? students.filter(s => s.status === 'active').length;
+  const totalStudents = performanceStats?.totalStudents ?? students.length;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -305,13 +335,31 @@ export default function TeacherStatsPage() {
           </div>
         </div>
 
-        {/* Content Container */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-6 space-y-6">
-          {/* Teacher Name */}
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold text-neutral-900">{teacher.name}</h2>
-            <p className="text-neutral-600">Performance Statistics</p>
+        {/* Error Message */}
+        {error && (
+          <div className="bg-danger-50 border border-danger-200 rounded-xl p-4">
+            <p className="text-sm text-danger-600">{error}</p>
           </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl border border-neutral-200 p-12">
+            <div className="flex flex-col items-center justify-center">
+              <ArrowPathIcon className="h-8 w-8 text-primary-600 animate-spin mb-4" />
+              <p className="text-sm text-neutral-600">Loading statistics...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Content Container */}
+        {!loading && (
+          <div className="bg-white rounded-xl border border-neutral-200 p-6 space-y-6">
+            {/* Teacher Name */}
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold text-neutral-900">{teacher.name}</h2>
+              <p className="text-neutral-600">Performance Statistics</p>
+            </div>
 
           {/* Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -381,7 +429,7 @@ export default function TeacherStatsPage() {
             </div>
             <p className="text-3xl font-semibold text-neutral-900">{activeStudents}</p>
             <p className="text-sm text-neutral-500 mt-2">
-              out of {students.length} total
+              out of {totalStudents} total
             </p>
           </div>
         </div>
@@ -401,7 +449,9 @@ export default function TeacherStatsPage() {
               </div>
               <div className="flex justify-between items-center pb-3 border-b border-neutral-100">
                 <span className="text-sm text-neutral-600">Specialization</span>
-                <span className="font-semibold text-neutral-900">{teacher.specialization}</span>
+                <span className="font-semibold text-neutral-900">
+                  {performanceMetrics?.specialization || teacher.specialization || 'N/A'}
+                </span>
               </div>
             </div>
             <div className="space-y-4">
@@ -411,8 +461,8 @@ export default function TeacherStatsPage() {
                   <span className="text-sm text-neutral-600">Best Performing Day</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-success-600">{formatCurrency(bestDay[1])}</p>
-                  <p className="text-xs text-neutral-500">{bestDay[0]}</p>
+                  <p className="font-semibold text-success-600">{formatCurrency(bestDay.pnl)}</p>
+                  <p className="text-xs text-neutral-500">{bestDay.date}</p>
                 </div>
               </div>
               <div className="flex justify-between items-center pb-3 border-b border-neutral-100">
@@ -421,17 +471,19 @@ export default function TeacherStatsPage() {
                   <span className="text-sm text-neutral-600">Worst Performing Day</span>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-danger-600">{formatCurrency(worstDay[1])}</p>
-                  <p className="text-xs text-neutral-500">{worstDay[0]}</p>
+                  <p className="font-semibold text-danger-600">{formatCurrency(worstDay.pnl)}</p>
+                  <p className="text-xs text-neutral-500">{worstDay.date}</p>
                 </div>
               </div>
               <div className="flex justify-between items-center pb-3 border-b border-neutral-100">
                 <span className="text-sm text-neutral-600">Average P&L per Trade</span>
                 <span className={cn(
                   'font-semibold',
-                  totalPnL >= 0 ? 'text-success-600' : 'text-danger-600'
+                  (performanceMetrics?.averagePnlPerTrade ?? (totalTrades > 0 ? totalPnL / totalTrades : 0)) >= 0 
+                    ? 'text-success-600' 
+                    : 'text-danger-600'
                 )}>
-                  {formatCurrency(totalTrades > 0 ? totalPnL / totalTrades : 0)}
+                  {formatCurrency(performanceMetrics?.averagePnlPerTrade ?? (totalTrades > 0 ? totalPnL / totalTrades : 0))}
                 </span>
               </div>
             </div>
@@ -504,7 +556,8 @@ export default function TeacherStatsPage() {
             </Table>
           )}
         </div>
-        </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
