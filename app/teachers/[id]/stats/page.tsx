@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeftIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/outline';
-import Link from 'next/link';
+import { ArrowLeftIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/common/Table';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -20,6 +19,7 @@ export default function TeacherStatsPage() {
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [isReloading, setIsReloading] = useState(false);
 
   // Check auth
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function TeacherStatsPage() {
   }, [router]);
 
   // Load data
-  useEffect(() => {
+  const loadData = useCallback(() => {
     const teachers = storage.getItem('teachers') || [];
     const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
     
@@ -50,6 +50,18 @@ export default function TeacherStatsPage() {
     const teacherTrades = allTrades.filter((t: Trade) => t.teacherId === teacherId);
     setTrades(teacherTrades);
   }, [teacherId, router]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleReload = () => {
+    setIsReloading(true);
+    setTimeout(() => {
+      loadData();
+      setIsReloading(false);
+    }, 200);
+  };
 
   if (!isAuthenticated() || !teacher) {
     return null;
@@ -117,23 +129,52 @@ export default function TeacherStatsPage() {
   return (
     <DashboardLayout title={`${teacher.name} - Statistics`}>
       <div className="space-y-6">
-        {/* Back Button */}
-        <Link
-          href={`/teachers/${teacherId}`}
-          className="inline-flex items-center text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
-        >
-          <ArrowLeftIcon className="h-4 w-4 mr-1" />
-          Back to Teacher Details
-        </Link>
+        {/* Header Toolbar */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push(`/teachers/${teacherId}`)}
+              className="inline-flex h-9 items-center gap-2 rounded-3xl border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              Back
+            </button>
+          </div>
 
-        {/* Teacher Name */}
-        <div>
-          <h2 className="text-2xl font-semibold text-neutral-900">{teacher.name}</h2>
-          <p className="text-neutral-600">Performance Statistics</p>
+          <div className="flex-1 text-center">
+            <h2 className="text-lg font-semibold text-neutral-900">Teacher Statistics</h2>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleReload}
+              disabled={isReloading}
+              className="inline-flex h-9 items-center gap-2 rounded-3xl border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <ArrowPathIcon className={cn('h-4 w-4', isReloading && 'animate-spin')} />
+            </button>
+            <div className="hidden md:block">
+              <input
+                type="search"
+                placeholder="Search"
+                className="h-9 w-48 rounded-3xl border border-neutral-200 bg-white px-4 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Content Container */}
+        <div className="bg-white rounded-xl border border-neutral-200 p-6 space-y-6">
+          {/* Teacher Name */}
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-neutral-900">{teacher.name}</h2>
+            <p className="text-neutral-600">Performance Statistics</p>
+          </div>
+
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white rounded-xl border border-neutral-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-neutral-600">Total Trades</h3>
@@ -322,6 +363,7 @@ export default function TeacherStatsPage() {
               </TableBody>
             </Table>
           )}
+        </div>
         </div>
       </div>
     </DashboardLayout>
