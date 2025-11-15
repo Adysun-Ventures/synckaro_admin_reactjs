@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { 
   ArrowLeftIcon, 
   UserPlusIcon, 
   ChartBarIcon, 
   UserCircleIcon,
-  ArrowDownTrayIcon 
+  ArrowDownTrayIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/common/Button';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -28,6 +28,7 @@ export default function TeacherLogsPage() {
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [filterAction, setFilterAction] = useState<ActionType>('all');
+  const [isReloading, setIsReloading] = useState(false);
 
   // Check auth
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function TeacherLogsPage() {
   }, [router]);
 
   // Load data
-  useEffect(() => {
+  const loadData = useCallback(() => {
     const teachers = storage.getItem('teachers') || [];
     const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
     
@@ -50,9 +51,77 @@ export default function TeacherLogsPage() {
 
     // Load activity logs for this teacher
     const allLogs = storage.getItem('activityLogs') || [];
-    const teacherLogs = allLogs.filter((log: ActivityLog) => log.teacherId === teacherId);
+    let teacherLogs = allLogs.filter((log: ActivityLog) => log.teacherId === teacherId);
+    
+    // Hardcoded fallback data if no logs found
+    if (teacherLogs.length === 0) {
+      const now = new Date();
+      teacherLogs = [
+        {
+          id: 'log-1',
+          teacherId: teacherId,
+          action: 'trade_executed' as const,
+          timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          details: 'Executed BUY order for INFY - 30 shares at ₹1,610.50',
+        },
+        {
+          id: 'log-2',
+          teacherId: teacherId,
+          action: 'student_added' as const,
+          timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+          details: 'Added new student: Rahul Verma with initial capital of ₹1,20,000',
+        },
+        {
+          id: 'log-3',
+          teacherId: teacherId,
+          action: 'trade_executed' as const,
+          timestamp: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
+          details: 'Executed SELL order for TCS - 20 shares at ₹3,680.00',
+        },
+        {
+          id: 'log-4',
+          teacherId: teacherId,
+          action: 'profile_updated' as const,
+          timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
+          details: 'Updated profile information: Changed specialization to Intraday Trading',
+        },
+        {
+          id: 'log-5',
+          teacherId: teacherId,
+          action: 'trade_executed' as const,
+          timestamp: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+          details: 'Executed BUY order for RELIANCE - 15 shares at ₹2,450.00',
+        },
+        {
+          id: 'log-6',
+          teacherId: teacherId,
+          action: 'student_added' as const,
+          timestamp: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
+          details: 'Added new student: Pooja Nair with initial capital of ₹90,000',
+        },
+        {
+          id: 'log-7',
+          teacherId: teacherId,
+          action: 'profile_created' as const,
+          timestamp: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
+          details: 'Teacher profile created and activated in the system',
+        },
+      ];
+    }
     setLogs(teacherLogs);
   }, [teacherId, router]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleReload = () => {
+    setIsReloading(true);
+    setTimeout(() => {
+      loadData();
+      setIsReloading(false);
+    }, 200);
+  };
 
   // Filter logs
   const filteredLogs = useMemo(() => {
@@ -139,29 +208,49 @@ export default function TeacherLogsPage() {
   return (
     <DashboardLayout title={`${teacher.name} - Activity Logs`}>
       <div className="space-y-6">
-        {/* Back Button */}
-        <Link
-          href={`/teachers/${teacherId}`}
-          className="inline-flex items-center text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
-        >
-          <ArrowLeftIcon className="h-4 w-4 mr-1" />
-          Back to Teacher Details
-        </Link>
-
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold text-neutral-900">{teacher.name}</h2>
-            <p className="text-neutral-600">Activity Logs</p>
+        {/* Header Toolbar */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => router.push(`/teachers/${teacherId}`)}
+              className="inline-flex h-9 items-center gap-2 rounded-3xl border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              Back
+            </button>
           </div>
-          <Button
-            variant="secondary"
-            onClick={handleExport}
-            disabled={filteredLogs.length === 0}
-          >
-            <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
-            Export to CSV
-          </Button>
+
+          <div className="flex-1 text-center">
+            <h2 className="text-lg font-semibold text-neutral-900">Activity Logs</h2>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleReload}
+              disabled={isReloading}
+              className="inline-flex h-9 items-center gap-2 rounded-3xl border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <ArrowPathIcon className={cn('h-4 w-4', isReloading && 'animate-spin')} />
+            </button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExport}
+              disabled={filteredLogs.length === 0}
+            >
+              <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+            <div className="hidden md:block">
+              <input
+                type="search"
+                placeholder="Search"
+                className="h-9 w-48 rounded-3xl border border-neutral-200 bg-white px-4 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
