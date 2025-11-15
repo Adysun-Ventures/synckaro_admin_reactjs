@@ -229,21 +229,30 @@ export default function TeacherDetailsPage() {
       }
 
       // Call delete API
-      await apiClient.delete('/admin/teacher/delete', {
+      const response = await apiClient.delete<{
+        status: string;
+        message: string;
+      }>('/admin/teacher/delete', {
         data: {
           id: teacherIdNum,
         },
       });
 
-      // Remove from localStorage
-      const teachers = storage.getItem('teachers') || [];
-      const updatedTeachers = teachers.filter((t: Teacher) => t.id !== teacherId);
-      storage.setItem('teachers', updatedTeachers);
+      // Check if deletion was successful
+      if (response.data && response.data.message) {
+        // Remove from localStorage
+        const teachers = storage.getItem('teachers') || [];
+        const updatedTeachers = teachers.filter((t: Teacher) => t.id !== teacherId);
+        storage.setItem('teachers', updatedTeachers);
 
-      // Redirect to teachers list
-      router.push('/teachers');
+        // Redirect to teachers list
+        router.push('/teachers');
+      } else {
+        throw new Error('Delete operation failed');
+      }
     } catch (err: any) {
       console.error('Error deleting teacher:', err);
+      setError(err?.error || err?.message || 'Failed to delete teacher');
       // Still redirect on error (optimistic update)
       const teachers = storage.getItem('teachers') || [];
       const updatedTeachers = teachers.filter((t: Teacher) => t.id !== teacherId);
