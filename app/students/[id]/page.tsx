@@ -93,11 +93,6 @@ export default function StudentProfilePage() {
         throw new Error('Invalid student ID');
       }
 
-      // Get student name from localStorage if available
-      const students = storage.getItem('students') || [];
-      const localStudent = students.find((s: Student) => s.id === studentId);
-      const studentName = localStudent?.name || student?.name || '';
-
       const response = await apiClient.post<{
         success: boolean;
         data: {
@@ -112,7 +107,7 @@ export default function StudentProfilePage() {
           current_capital: number;
           risk_percent: number;
           strategy?: string;
-          joined_on: string; // Format: "DD MMM YYYY HH:MM:SS AM/PM" (e.g., "11 Nov 2025 12:35:45 PM")
+          joined_on: string | null; // Format: "DD MMM YYYY HH:MM:SS AM/PM" or null
           last_updated: string; // Format: "DD MMM YYYY HH:MM:SS AM/PM" (e.g., "11 Nov 2025 12:35:45 PM")
           recent_trades: Array<{
             stock: string;
@@ -126,7 +121,6 @@ export default function StudentProfilePage() {
         };
       }>('/admin/student/view', {
         student_id: studentIdNum,
-        student_name: studentName,
       });
 
       if (response.data && response.data.success && response.data.data) {
@@ -146,7 +140,7 @@ export default function StudentProfilePage() {
           profitLoss: apiData.current_capital - apiData.initial_capital,
           riskPercentage: apiData.risk_percent,
           strategy: apiData.strategy,
-          joinedDate: apiData.joined_on,
+          joinedDate: apiData.joined_on || new Date().toISOString(),
         };
 
         setStudent(mappedStudent);
@@ -175,7 +169,7 @@ export default function StudentProfilePage() {
         };
 
         // Map recent trades from API
-        let mappedTrades: Trade[] = apiData.recent_trades.map((trade, index) => ({
+        const mappedTrades: Trade[] = apiData.recent_trades.map((trade, index) => ({
           id: `trade-${apiData.student_id}-${index}`,
           teacherId: String(apiData.teacher_id),
           teacherName: apiData.teacher_name,
@@ -190,46 +184,6 @@ export default function StudentProfilePage() {
           createdAt: trade.date,
           timestamp: trade.date,
         }));
-
-        // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides recent_trades
-        // Hardcoded fallback data if no trades from API
-        if (mappedTrades.length === 0) {
-          const now = new Date();
-          mappedTrades = [
-            {
-              id: 'trade-1',
-              teacherId: String(apiData.teacher_id),
-              teacherName: apiData.teacher_name,
-              studentId: String(apiData.student_id),
-              studentName: apiData.student_name,
-              stock: 'INFY',
-              quantity: 30,
-              price: 1610.5,
-              type: 'BUY' as const,
-              exchange: 'NSE' as const,
-              status: 'executed' as const,
-              createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-              timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-              pnl: 4500,
-            },
-            {
-              id: 'trade-2',
-              teacherId: String(apiData.teacher_id),
-              teacherName: apiData.teacher_name,
-              studentId: String(apiData.student_id),
-              studentName: apiData.student_name,
-              stock: 'TCS',
-              quantity: 20,
-              price: 3680.0,
-              type: 'SELL' as const,
-              exchange: 'BSE' as const,
-              status: 'executed' as const,
-              createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-              timestamp: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-              pnl: 3200,
-            },
-          ];
-        }
 
         // Sort trades by date (most recent first)
         const sortedTrades = mappedTrades.sort((a, b) => {
@@ -276,18 +230,19 @@ export default function StudentProfilePage() {
     } finally {
       setLoading(false);
     }
-  }, [studentId, router, student]);
+  }, [studentId, router]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleReload = () => {
+  const handleReload = async () => {
     setIsReloading(true);
-    setTimeout(() => {
-      loadData();
+    try {
+      await loadData();
+    } finally {
       setIsReloading(false);
-    }, 200);
+    }
   };
 
   const pnl = useMemo(() => {
@@ -334,7 +289,7 @@ export default function StudentProfilePage() {
   }, [currentPage, trades, totalTrades, pageSize]);
 
 
-  if (!student || !isAuthenticated()) {
+  if (!isAuthenticated()) {
     return null;
   }
 
@@ -377,8 +332,26 @@ export default function StudentProfilePage() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="bg-danger-50 border border-danger-200 rounded-xl p-4">
+            <p className="text-sm text-danger-600">{error}</p>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl border border-neutral-200 p-12">
+            <div className="flex flex-col items-center justify-center">
+              <ArrowPathIcon className="h-8 w-8 text-primary-600 animate-spin mb-4" />
+              <p className="text-sm text-neutral-600">Loading student data...</p>
+            </div>
+          </div>
+        )}
+
         {/* Header Card */}
-        <Card
+        {!loading && student && (
+          <Card
           padding="lg"
           tone="neutral"
           hover
@@ -456,8 +429,10 @@ export default function StudentProfilePage() {
             </div>
           </div>
         </Card>
+        )}
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {!loading && student && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card padding="lg">
             <p className="text-xs uppercase tracking-wide text-neutral-500">Initial Capital</p>
             <p className="mt-1 text-3xl font-semibold text-neutral-900">
@@ -481,9 +456,11 @@ export default function StudentProfilePage() {
               {formatCurrency(pnl)}
             </p>
           </Card>
-        </div>
+          </div>
+        )}
 
-        <div>
+        {!loading && student && (
+          <div>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-neutral-900">Recent Trades</h2>
             <span className="text-sm text-neutral-500">{trades.length} total</span>
@@ -514,7 +491,8 @@ export default function StudentProfilePage() {
               />
             </div>
           )}
-        </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
