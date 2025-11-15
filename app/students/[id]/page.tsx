@@ -17,6 +17,7 @@ import { Card } from '@/components/common/Card';
 import { Avatar } from '@/components/common/Avatar';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Toggle } from '@/components/common/Toggle';
+import { Button } from '@/components/common/Button';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PaginationFooter } from '@/components/common/PaginationFooter';
 import { TradeListHeader } from '@/components/teachers/TradeListHeader';
@@ -365,15 +366,6 @@ export default function StudentProfilePage() {
             >
               <ArrowPathIcon className={cn('h-4 w-4', isReloading && 'animate-spin')} />
             </button>
-            {teacher && (
-              <Link
-                href={`/teachers/${teacher.id}`}
-                className="inline-flex h-9 items-center gap-2 rounded-3xl border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50"
-              >
-                <UserGroupIcon className="h-4 w-4" />
-                View Teacher
-              </Link>
-            )}
             <div className="hidden md:block">
               <input
                 type="search"
@@ -384,40 +376,70 @@ export default function StudentProfilePage() {
           </div>
         </div>
 
-        <Card gradient gradientFrom="from-indigo-900" gradientVia="via-indigo-600" gradientTo="to-purple-300" padding="lg">
-          <div className="flex flex-col gap-6 text-white md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-4">
-              <Avatar name={student.name} size="2xl" showStatus statusColor={student.status === 'active' ? 'success' : 'danger'} />
-              <div>
-                <div className="mb-2 flex items-center gap-3">
-                  <h1 className="text-3xl font-bold">{student.name}</h1>
-                  <StatusBadge status={student.status} className="border-white/40 bg-white/20 text-white" />
-                </div>
-                <div className="flex flex-wrap items-center gap-4 text-indigo-100">
-                  <div className="flex items-center gap-2">
-                    <EnvelopeIcon className="h-4 w-4" />
-                    <span>{student.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DevicePhoneMobileIcon className="h-4 w-4" />
-                    <span>{student.mobile}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ChartBarIcon className="h-4 w-4" />
-                    <span>Joined {formatDate(student.joinedDate)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-start gap-2 md:items-end">
-              <div className="rounded-full border border-white/40 px-3 py-1 text-sm text-white/90">
-                Teacher: {teacher?.name ?? 'Unassigned'}
-              </div>
+        {/* Header Card */}
+        <Card
+          padding="lg"
+          tone="neutral"
+          hover
+          header={
+            <>
               <div className="flex items-center gap-3">
-                <span className="text-sm text-indigo-100">Status</span>
-                <Toggle enabled={student.status === 'active'} onChange={handleStatusToggle} />
+                <Avatar
+                  name={student.name}
+                  size="2xl"
+                  showStatus
+                  statusColor={student.status === 'active' ? 'success' : 'danger'}
+                />
+                <div>
+                  <h1 className="text-2xl font-bold text-neutral-900">{student.name}</h1>
+                  <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
+                    <div className="flex items-center gap-2">
+                      <EnvelopeIcon className="h-4 w-4" />
+                      <span>{student.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <DevicePhoneMobileIcon className="h-4 w-4" />
+                      <span>{student.mobile}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ChartBarIcon className="h-4 w-4" />
+                      <span>Joined {formatDate(student.joinedDate)}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {teacher && (
+                  <Link href={`/teachers/${teacher.id}`} className="inline-flex">
+                    <Button variant="secondary" size="sm">
+                      <UserGroupIcon className="mr-1 h-4 w-4" />
+                      View Teacher
+                    </Button>
+                  </Link>
+                )}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-neutral-600">Status</span>
+                  <Toggle enabled={student.status === 'active'} onChange={handleStatusToggle} />
+                </div>
+              </div>
+            </>
+          }
+          footer={
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500">
+              <span>Last synced {new Date().toLocaleTimeString()}</span>
+              <span>Teacher: {teacher?.name ?? 'Unassigned'} • Total Trades: {trades.length}</span>
+            </div>
+          }
+        >
+          <div className="flex items-start justify-between gap-6">
+            <div className="flex-1">
+              <p className="text-sm text-neutral-600">
+                {student.strategy || 'No strategy documented yet.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-neutral-500">
+              <span>Risk: {student.riskPercentage || 0}%</span>
+              <span>P&L: {formatCurrency(pnl)}</span>
             </div>
           </div>
         </Card>
@@ -447,13 +469,6 @@ export default function StudentProfilePage() {
             </p>
           </Card>
         </div>
-
-        <Card padding="lg">
-          <p className="text-xs uppercase tracking-wide text-neutral-500">Strategy</p>
-          <p className="mt-1 text-sm text-neutral-700">
-            {student.strategy || 'No strategy documented yet.'}
-          </p>
-        </Card>
 
         <div>
           <div className="mb-4 flex items-center justify-between">
