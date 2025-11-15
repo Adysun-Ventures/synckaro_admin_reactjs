@@ -27,6 +27,7 @@ export interface OTPVerifyData {
 export interface Teacher {
   id: string;
   name: string;
+  doj: string
   email: string;
   mobile: string;
   phone?: string;

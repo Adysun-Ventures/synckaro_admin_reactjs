@@ -74,7 +74,7 @@ export default function TeachersPage() {
 
   // Merge API response with localStorage and apply default dummy values
   const mergeTeachersWithLocalStorage = (
-    apiTeachers: Array<{ id: number; name: string; email: string; status: string }>
+    apiTeachers: Array<{ id: number; name: string; email: string; doj: string; status: string }>
   ): Teacher[] => {
     const localStorageTeachers = (storage.getItem("teachers") || []) as Teacher[];
 
@@ -102,6 +102,7 @@ export default function TeachersPage() {
         id: String(apiTeacher.id), // Convert number to string
         name: apiTeacher.name,
         email: apiTeacher.email,
+        doj: apiTeacher.doj,
         status: apiTeacher.status as Teacher["status"],
         mobile: localTeacher?.mobile || defaultValues.mobile,
         phone: localTeacher?.phone || defaultValues.phone,
@@ -125,7 +126,7 @@ export default function TeachersPage() {
 
     try {
       const response = await apiClient.post<
-        Array<{ id: number; name: string; email: string; status: string }>
+        Array<{ id: number; name: string; email: string; doj: string; status: string }>
       >("/admin/teacher/list", {
         page: currentPage,
         limit: pageSize,
@@ -504,7 +505,7 @@ export default function TeachersPage() {
                       />
                     </TableHead>
                     <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
+                    <TableHead>Date of Joining</TableHead>
                     <TableHead className="text-center">Students</TableHead>
                     <TableHead className="text-center">Trades</TableHead>
                     <TableHead className="text-center">Status</TableHead>
@@ -531,7 +532,7 @@ export default function TeachersPage() {
                         {teacher.name}
                       </TableCell>
                       <TableCell className="text-neutral-600">
-                        {teacher.email}
+                        {teacher.doj}
                       </TableCell>
                       <TableCell className="text-center text-neutral-900">
                         {teacher.totalStudents}
