@@ -42,12 +42,150 @@ export default function TeacherStatsPage() {
 
     // Load students
     const allStudents = storage.getItem('students') || [];
-    const teacherStudents = allStudents.filter((s: Student) => s.teacherId === teacherId);
+    let teacherStudents = allStudents.filter((s: Student) => s.teacherId === teacherId);
+    
+    // Hardcoded fallback data if no students found
+    if (teacherStudents.length === 0) {
+      teacherStudents = [
+        {
+          id: 'student-1',
+          name: 'Rahul Verma',
+          email: 'rahul.verma@synckaro.com',
+          mobile: '9876543210',
+          teacherId: teacherId,
+          teacherName: foundTeacher.name,
+          status: 'active' as const,
+          initialCapital: 120000,
+          currentCapital: 145000,
+          profitLoss: 25000,
+          riskPercentage: 3,
+          strategy: 'Moderate',
+          joinedDate: new Date('2024-01-15').toISOString(),
+        },
+        {
+          id: 'student-2',
+          name: 'Pooja Nair',
+          email: 'pooja.nair@synckaro.com',
+          mobile: '9876543211',
+          teacherId: teacherId,
+          teacherName: foundTeacher.name,
+          status: 'active' as const,
+          initialCapital: 90000,
+          currentCapital: 105000,
+          profitLoss: 15000,
+          riskPercentage: 2,
+          strategy: 'Conservative',
+          joinedDate: new Date('2024-02-10').toISOString(),
+        },
+        {
+          id: 'student-3',
+          name: 'Amit Patel',
+          email: 'amit.patel@synckaro.com',
+          mobile: '9876543212',
+          teacherId: teacherId,
+          teacherName: foundTeacher.name,
+          status: 'active' as const,
+          initialCapital: 150000,
+          currentCapital: 138000,
+          profitLoss: -12000,
+          riskPercentage: 4,
+          strategy: 'Aggressive',
+          joinedDate: new Date('2024-01-20').toISOString(),
+        },
+      ];
+    }
     setStudents(teacherStudents);
 
     // Load trades
     const allTrades = storage.getItem('trades') || [];
-    const teacherTrades = allTrades.filter((t: Trade) => t.teacherId === teacherId);
+    let teacherTrades = allTrades.filter((t: Trade) => t.teacherId === teacherId);
+    
+    // Hardcoded fallback data if no trades found
+    if (teacherTrades.length === 0) {
+      const now = new Date();
+      teacherTrades = [
+        {
+          id: 'trade-1',
+          teacherId: teacherId,
+          teacherName: foundTeacher.name,
+          studentId: teacherStudents[0]?.id,
+          studentName: teacherStudents[0]?.name,
+          stock: 'INFY',
+          quantity: 30,
+          price: 1610.5,
+          type: 'BUY' as const,
+          exchange: 'NSE' as const,
+          status: 'executed' as const,
+          createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          pnl: 4500,
+        },
+        {
+          id: 'trade-2',
+          teacherId: teacherId,
+          teacherName: foundTeacher.name,
+          studentId: teacherStudents[1]?.id,
+          studentName: teacherStudents[1]?.name,
+          stock: 'TCS',
+          quantity: 20,
+          price: 3680.0,
+          type: 'SELL' as const,
+          exchange: 'BSE' as const,
+          status: 'executed' as const,
+          createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          pnl: 3200,
+        },
+        {
+          id: 'trade-3',
+          teacherId: teacherId,
+          teacherName: foundTeacher.name,
+          studentId: teacherStudents[2]?.id,
+          studentName: teacherStudents[2]?.name,
+          stock: 'RELIANCE',
+          quantity: 15,
+          price: 2450.0,
+          type: 'BUY' as const,
+          exchange: 'NSE' as const,
+          status: 'executed' as const,
+          createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          pnl: -1800,
+        },
+        {
+          id: 'trade-4',
+          teacherId: teacherId,
+          teacherName: foundTeacher.name,
+          studentId: teacherStudents[0]?.id,
+          studentName: teacherStudents[0]?.name,
+          stock: 'HDFCBANK',
+          quantity: 25,
+          price: 1680.0,
+          type: 'SELL' as const,
+          exchange: 'NSE' as const,
+          status: 'executed' as const,
+          createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+          pnl: 2800,
+        },
+        {
+          id: 'trade-5',
+          teacherId: teacherId,
+          teacherName: foundTeacher.name,
+          studentId: teacherStudents[1]?.id,
+          studentName: teacherStudents[1]?.name,
+          stock: 'ICICIBANK',
+          quantity: 35,
+          price: 1120.0,
+          type: 'BUY' as const,
+          exchange: 'BSE' as const,
+          status: 'executed' as const,
+          createdAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+          timestamp: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+          pnl: 2100,
+        },
+      ];
+    }
     setTrades(teacherTrades);
   }, [teacherId, router]);
 
