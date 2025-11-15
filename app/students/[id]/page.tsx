@@ -10,6 +10,7 @@ import {
   UserGroupIcon,
   ChartBarIcon,
   ArrowPathIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -409,6 +410,18 @@ export default function StudentProfilePage() {
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <Link href={`/students/${studentId}/stats`} className="inline-flex">
+                  <Button variant="secondary" size="sm">
+                    <ChartBarIcon className="mr-1 h-4 w-4" />
+                    View Statistics
+                  </Button>
+                </Link>
+                <Link href={`/students/${studentId}/logs`} className="inline-flex">
+                  <Button variant="secondary" size="sm">
+                    <ClockIcon className="mr-1 h-4 w-4" />
+                    View Logs
+                  </Button>
+                </Link>
                 {teacher && (
                   <Link href={`/teachers/${teacher.id}`} className="inline-flex">
                     <Button variant="secondary" size="sm">
