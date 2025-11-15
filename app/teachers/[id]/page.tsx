@@ -26,6 +26,7 @@ import { storage } from '@/lib/storage';
 import { cn } from '@/lib/utils';
 import { Teacher, Student, Trade } from '@/types';
 import { isAuthenticated } from '@/services/authService';
+import { useAuth } from '@/hooks/useAuth';
 import apiClient from '@/lib/api';
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200, 300];
@@ -34,6 +35,7 @@ export default function TeacherDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const teacherId = params.id as string;
+  const { userId, isLoading: authLoading } = useAuth();
 
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
@@ -62,7 +64,7 @@ export default function TeacherDetailsPage() {
   }, [router]);
 
   const loadData = useCallback(async () => {
-    if (!isAuthenticated()) return;
+    if (!isAuthenticated() || !userId) return;
 
     setLoading(true);
     setError(null);
@@ -74,11 +76,6 @@ export default function TeacherDetailsPage() {
         throw new Error('Invalid teacher ID');
       }
 
-      // Get teacher name from localStorage if available
-      const teachers = storage.getItem('teachers') || [];
-      const localTeacher = teachers.find((t: Teacher) => t.id === teacherId);
-      const teacherName = localTeacher?.name || teacher?.name || '';
-
       const response = await apiClient.post<{
         success: boolean;
         data: {
@@ -87,8 +84,9 @@ export default function TeacherDetailsPage() {
           status: string;
           email: string;
           phone?: string;
-          joined_on: string; // Format: "DD MMM YYYY HH:MM:SS AM/PM" (e.g., "11 Nov 2025 12:35:45 PM")
+          joined_on: string | null; // Format: "DD MMM YYYY HH:MM:SS AM/PM" (e.g., "11 Nov 2025 12:35:45 PM") or null
           last_updated: string; // Format: "DD MMM YYYY HH:MM:SS AM/PM" (e.g., "11 Nov 2025 12:35:45 PM")
+          specialization?: string;
           summary: {
             total_students: number;
             total_trades: number;
@@ -115,7 +113,7 @@ export default function TeacherDetailsPage() {
         };
       }>('/admin/teacher/view', {
         teacher_id: teacherIdNum,
-        teacher_name: teacherName,
+        admin_id: userId,
       });
 
       if (response.data && response.data.success && response.data.data) {
@@ -229,6 +227,7 @@ export default function TeacherDetailsPage() {
         }
 
         // Map API response to Teacher type with calculated/fallback values
+        const joinedOnDate = apiData.joined_on || new Date().toISOString();
         const mappedTeacher: Teacher = {
           id: String(apiData.teacher_id),
           name: apiData.name,
@@ -236,14 +235,13 @@ export default function TeacherDetailsPage() {
           status: apiData.status as Teacher['status'],
           phone: apiData.phone,
           mobile: apiData.phone?.replace(/[^0-9]/g, '') || '',
-          doj: apiData.joined_on,
-          joinedDate: apiData.joined_on,
+          doj: joinedOnDate,
+          joinedDate: joinedOnDate,
           totalStudents: totalStudents,
           totalTrades: totalTrades,
           totalCapital: totalCapital,
           winRate: winRate,
-          // TODO: Remove hardcoded specialization - Replace with actual API response when backend provides specialization field
-          specialization: 'Intraday Trading', // Hardcoded fallback
+          specialization: apiData.specialization || 'Intraday Trading',
           profitLoss: undefined,
         };
 
@@ -285,11 +283,13 @@ export default function TeacherDetailsPage() {
     } finally {
       setLoading(false);
     }
-  }, [teacherId, router]);
+  }, [teacherId, userId, router]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (!authLoading && userId) {
+      loadData();
+    }
+  }, [loadData, authLoading, userId]);
 
   // Delete teacher
   const handleDelete = async () => {
