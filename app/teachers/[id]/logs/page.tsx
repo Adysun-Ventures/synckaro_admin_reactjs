@@ -17,6 +17,7 @@ import { storage } from '@/lib/storage';
 import { Teacher, ActivityLog } from '@/types';
 import { isAuthenticated } from '@/services/authService';
 import { cn } from '@/lib/utils';
+import apiClient from '@/lib/api';
 
 type ActionType = 'all' | 'trade_executed' | 'student_added' | 'profile_updated' | 'profile_created';
 
@@ -29,6 +30,8 @@ export default function TeacherLogsPage() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [filterAction, setFilterAction] = useState<ActionType>('all');
   const [isReloading, setIsReloading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Check auth
   useEffect(() => {
@@ -37,91 +40,131 @@ export default function TeacherLogsPage() {
     }
   }, [router]);
 
-  // Load data
-  const loadData = useCallback(() => {
-    const teachers = storage.getItem('teachers') || [];
-    const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
-    
-    if (!foundTeacher) {
-      router.push('/teachers');
-      return;
-    }
-    
-    setTeacher(foundTeacher);
+  // Load data from API
+  const loadData = useCallback(async () => {
+    if (!isAuthenticated()) return;
 
-    // Load activity logs for this teacher
-    const allLogs = storage.getItem('activityLogs') || [];
-    let teacherLogs = allLogs.filter((log: ActivityLog) => log.teacherId === teacherId);
-    
-    // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides activity logs
-    // Hardcoded fallback data if no logs found
-    if (teacherLogs.length === 0) {
-      const now = new Date();
-      teacherLogs = [
-        {
-          id: 'log-1',
-          teacherId: teacherId,
-          action: 'trade_executed' as const,
-          timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          details: 'Executed BUY order for INFY - 30 shares at ₹1,610.50',
-        },
-        {
-          id: 'log-2',
-          teacherId: teacherId,
-          action: 'student_added' as const,
-          timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-          details: 'Added new student: Rahul Verma with initial capital of ₹1,20,000',
-        },
-        {
-          id: 'log-3',
-          teacherId: teacherId,
-          action: 'trade_executed' as const,
-          timestamp: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-          details: 'Executed SELL order for TCS - 20 shares at ₹3,680.00',
-        },
-        {
-          id: 'log-4',
-          teacherId: teacherId,
-          action: 'profile_updated' as const,
-          timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-          details: 'Updated profile information: Changed specialization to Intraday Trading',
-        },
-        {
-          id: 'log-5',
-          teacherId: teacherId,
-          action: 'trade_executed' as const,
-          timestamp: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-          details: 'Executed BUY order for RELIANCE - 15 shares at ₹2,450.00',
-        },
-        {
-          id: 'log-6',
-          teacherId: teacherId,
-          action: 'student_added' as const,
-          timestamp: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
-          details: 'Added new student: Pooja Nair with initial capital of ₹90,000',
-        },
-        {
-          id: 'log-7',
-          teacherId: teacherId,
-          action: 'profile_created' as const,
-          timestamp: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-          details: 'Teacher profile created and activated in the system',
-        },
-      ];
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Parse teacher_id as number
+      const teacherIdNum = parseInt(teacherId, 10);
+      if (isNaN(teacherIdNum)) {
+        throw new Error('Invalid teacher ID');
+      }
+
+      // Fetch teacher logs from API
+      const response = await apiClient.post<{
+        success: boolean;
+        data: {
+          trades: Array<{
+            id: number;
+            teacher_id: number;
+            action: string;
+            timestamp: string;
+            details: string;
+          }>;
+          students: Array<{
+            id: number;
+            teacher_id: number;
+            action: string;
+            timestamp: string;
+            details: string;
+          }>;
+          profile_updates: Array<{
+            id: number;
+            teacher_id: number;
+            action: string;
+            timestamp: string;
+            details: string;
+          }>;
+        };
+      }>('/admin/teacher/logs', {
+        teacher_id: teacherIdNum,
+      });
+
+      if (response.data && response.data.success && response.data.data) {
+        const { data } = response.data;
+
+        // Set teacher info
+        const teachers = storage.getItem('teachers') || [];
+        const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
+        
+        if (!foundTeacher) {
+          router.push('/teachers');
+          return;
+        }
+        
+        setTeacher(foundTeacher);
+
+        // Merge all log arrays and convert to ActivityLog format
+        const allLogs: ActivityLog[] = [
+          ...data.trades.map((log) => ({
+            id: String(log.id),
+            teacherId: String(log.teacher_id),
+            action: 'trade_executed' as const,
+            timestamp: log.timestamp,
+            details: log.details,
+          })),
+          ...data.students.map((log) => ({
+            id: String(log.id),
+            teacherId: String(log.teacher_id),
+            action: 'student_added' as const,
+            timestamp: log.timestamp,
+            details: log.details,
+          })),
+          ...data.profile_updates.map((log) => ({
+            id: String(log.id),
+            teacherId: String(log.teacher_id),
+            action: (log.action === 'profile_created' ? 'profile_created' : 'profile_updated') as 'profile_created' | 'profile_updated',
+            timestamp: log.timestamp,
+            details: log.details,
+          })),
+        ];
+
+        // Sort logs by timestamp (newest first)
+        allLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+        setLogs(allLogs);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err: any) {
+      console.error('Error fetching teacher logs:', err);
+      setError(err?.error || err?.message || 'Failed to fetch activity logs');
+
+      // Fallback to localStorage on error
+      const teachers = storage.getItem('teachers') || [];
+      const foundTeacher = teachers.find((t: Teacher) => t.id === teacherId);
+      
+      if (!foundTeacher) {
+        router.push('/teachers');
+        return;
+      }
+      
+      setTeacher(foundTeacher);
+
+      // Load activity logs from localStorage
+      const allLogs = storage.getItem('activityLogs') || [];
+      const teacherLogs = allLogs.filter((log: ActivityLog) => log.teacherId === teacherId);
+      setLogs(teacherLogs);
+    } finally {
+      setLoading(false);
     }
-    setLogs(teacherLogs);
   }, [teacherId, router]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleReload = () => {
+  const handleReload = async () => {
     setIsReloading(true);
-    setTimeout(() => {
-      loadData();
+    try {
+      await loadData();
+    } finally {
       setIsReloading(false);
-    }, 200);
+    }
   };
 
   // Filter logs
@@ -254,8 +297,26 @@ export default function TeacherLogsPage() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="bg-danger-50 border border-danger-200 rounded-xl p-4">
+            <p className="text-sm text-danger-600">{error}</p>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="bg-white rounded-xl border border-neutral-200 p-12">
+            <div className="flex flex-col items-center justify-center">
+              <ArrowPathIcon className="h-8 w-8 text-primary-600 animate-spin mb-4" />
+              <p className="text-sm text-neutral-600">Loading activity logs...</p>
+            </div>
+          </div>
+        )}
+
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-neutral-200 p-4">
+        {!loading && (
+          <div className="bg-white rounded-xl border border-neutral-200 p-4">
           <div className="flex items-center gap-4">
             <label className="text-sm font-medium text-neutral-700">Filter by Action:</label>
             <div className="flex gap-2">
@@ -306,9 +367,11 @@ export default function TeacherLogsPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Activity Timeline */}
-        <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+        {!loading && (
+          <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
           {filteredLogs.length === 0 ? (
             <EmptyState
               title="No activity logs"
@@ -345,10 +408,11 @@ export default function TeacherLogsPage() {
               ))}
             </div>
           )}
-        </div>
+          </div>
+        )}
 
         {/* Summary */}
-        {filteredLogs.length > 0 && (
+        {!loading && filteredLogs.length > 0 && (
           <div className="text-center text-sm text-neutral-500">
             Showing {filteredLogs.length} of {logs.length} total activities
           </div>
