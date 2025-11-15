@@ -75,46 +75,107 @@ export default function TeacherDetailsPage() {
       }
 
       const response = await apiClient.post<{
-        status: string;
-        data: { id: number; name: string; email: string };
+        success: boolean;
+        data: {
+          id: number;
+          name: string;
+          status: string;
+          email: string;
+          phone?: string;
+          joined_on: string;
+          last_updated: string;
+          summary: {
+            total_students: number;
+            total_trades: number;
+            total_capital: string;
+            win_rate: string;
+          };
+          associated_students: Array<{
+            id: number;
+            name: string;
+            email: string;
+            capital: number;
+            risk_percent: number;
+            status: string;
+          }>;
+          recent_trades: Array<{
+            stock: string;
+            type: string;
+            qty: number;
+            price: number;
+            exchange: string;
+            status: string;
+            date: string;
+          }>;
+        };
       }>('/admin/teacher/view', {
         id: teacherIdNum,
       });
 
-      if (response.data && response.data.data) {
-        // Get teacher from localStorage (dummy seed data)
-        const teachers = storage.getItem('teachers') || [];
-        const localTeacher = teachers.find((t: Teacher) => t.id === teacherId);
+      if (response.data && response.data.success && response.data.data) {
+        const apiData = response.data.data;
 
-        if (!localTeacher) {
-          // If not found in localStorage, create minimal teacher object
-          const mergedTeacher: Teacher = {
-            id: String(response.data.data.id),
-            name: response.data.data.name, // From API
-            email: response.data.data.email, // From API
-            status: response.data.status as Teacher['status'], // From API
-            mobile: '',
-            phone: undefined,
-            totalStudents: 0,
-            totalTrades: 0,
-            totalCapital: undefined,
-            profitLoss: undefined,
-            winRate: undefined,
-            specialization: undefined,
-            joinedDate: new Date().toISOString(),
-          };
-          setTeacher(mergedTeacher);
-        } else {
-          // Merge: Use name, email, status from API, keep everything else from localStorage
-          const mergedTeacher: Teacher = {
-            ...localTeacher,
-            name: response.data.data.name, // From API
-            email: response.data.data.email, // From API
-            status: response.data.status as Teacher['status'], // From API
-            id: String(response.data.data.id), // Ensure ID matches API
-          };
-          setTeacher(mergedTeacher);
-        }
+        // Map API response to Teacher type
+        const mappedTeacher: Teacher = {
+          id: String(apiData.id),
+          name: apiData.name,
+          email: apiData.email,
+          status: apiData.status as Teacher['status'],
+          phone: apiData.phone,
+          mobile: apiData.phone?.replace(/[^0-9]/g, '') || '',
+          doj: apiData.joined_on,
+          joinedDate: apiData.joined_on,
+          totalStudents: apiData.summary.total_students,
+          totalTrades: apiData.summary.total_trades,
+          totalCapital: parseFloat(apiData.summary.total_capital) || 0,
+          winRate: parseFloat(apiData.summary.win_rate) || 0,
+          specialization: undefined,
+          profitLoss: undefined,
+        };
+
+        setTeacher(mappedTeacher);
+
+        // Map associated students from API
+        const mappedStudents: Student[] = apiData.associated_students.map((student) => ({
+          id: String(student.id),
+          name: student.name,
+          email: student.email,
+          mobile: '',
+          teacherId: teacherId,
+          teacherName: apiData.name,
+          status: student.status as 'active' | 'inactive',
+          initialCapital: student.capital,
+          currentCapital: student.capital,
+          riskPercentage: student.risk_percent,
+          joinedDate: new Date().toISOString(),
+        }));
+
+        setStudents(mappedStudents);
+
+        // Map recent trades from API
+        const mappedTrades: Trade[] = apiData.recent_trades.map((trade, index) => ({
+          id: `trade-${apiData.id}-${index}`,
+          teacherId: teacherId,
+          teacherName: apiData.name,
+          stock: trade.stock,
+          quantity: trade.qty,
+          price: trade.price,
+          type: trade.type as 'BUY' | 'SELL',
+          exchange: trade.exchange as 'NSE' | 'BSE',
+          status: trade.status as 'pending' | 'executed' | 'completed' | 'failed' | 'cancelled',
+          createdAt: trade.date,
+          timestamp: trade.date,
+        }));
+
+        // Sort trades by date (most recent first)
+        const sortedTrades = mappedTrades.sort((a, b) => {
+          const dateA = new Date(a.timestamp || a.createdAt).getTime();
+          const dateB = new Date(b.timestamp || b.createdAt).getTime();
+          return dateB - dateA;
+        });
+
+        setTrades(sortedTrades);
+        setCurrentPage(1);
       } else {
         throw new Error('Invalid response format');
       }
@@ -132,25 +193,25 @@ export default function TeacherDetailsPage() {
       }
 
       setTeacher(foundTeacher);
+
+      // Fallback to localStorage for students and trades
+      const allStudents = storage.getItem('students') || [];
+      const teacherStudents = allStudents.filter((s: Student) => s.teacherId === teacherId);
+      setStudents(teacherStudents);
+
+      const allTrades = storage.getItem('trades') || [];
+      const teacherTrades = allTrades
+        .filter((t: Trade) => t.teacherId === teacherId)
+        .sort((a: Trade, b: Trade) => {
+          const dateA = new Date(a.timestamp || a.createdAt).getTime();
+          const dateB = new Date(b.timestamp || b.createdAt).getTime();
+          return dateB - dateA;
+        });
+      setTrades(teacherTrades);
+      setCurrentPage(1);
     } finally {
       setLoading(false);
     }
-
-    // Load students and trades from localStorage (dummy seed data)
-    const allStudents = storage.getItem('students') || [];
-    const teacherStudents = allStudents.filter((s: Student) => s.teacherId === teacherId);
-    setStudents(teacherStudents);
-
-    const allTrades = storage.getItem('trades') || [];
-    const teacherTrades = allTrades
-      .filter((t: Trade) => t.teacherId === teacherId)
-      .sort((a: Trade, b: Trade) => {
-        const dateA = new Date(a.timestamp || a.createdAt).getTime();
-        const dateB = new Date(b.timestamp || b.createdAt).getTime();
-        return dateB - dateA;
-      });
-    setTrades(teacherTrades);
-    setCurrentPage(1);
   }, [teacherId, router]);
 
   useEffect(() => {
