@@ -44,6 +44,7 @@ export default function TeacherStatsPage() {
     const allStudents = storage.getItem('students') || [];
     let teacherStudents = allStudents.filter((s: Student) => s.teacherId === teacherId);
     
+    // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides students data
     // Hardcoded fallback data if no students found
     if (teacherStudents.length === 0) {
       teacherStudents = [
@@ -100,6 +101,7 @@ export default function TeacherStatsPage() {
     const allTrades = storage.getItem('trades') || [];
     let teacherTrades = allTrades.filter((t: Trade) => t.teacherId === teacherId);
     
+    // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides trades data
     // Hardcoded fallback data if no trades found
     if (teacherTrades.length === 0) {
       const now = new Date();

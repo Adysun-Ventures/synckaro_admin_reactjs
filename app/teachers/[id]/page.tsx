@@ -74,16 +74,21 @@ export default function TeacherDetailsPage() {
         throw new Error('Invalid teacher ID');
       }
 
+      // Get teacher name from localStorage if available
+      const teachers = storage.getItem('teachers') || [];
+      const localTeacher = teachers.find((t: Teacher) => t.id === teacherId);
+      const teacherName = localTeacher?.name || teacher?.name || '';
+
       const response = await apiClient.post<{
         success: boolean;
         data: {
-          id: number;
+          teacher_id: number;
           name: string;
           status: string;
           email: string;
           phone?: string;
-          joined_on: string;
-          last_updated: string;
+          joined_on: string; // Format: "DD MMM YYYY HH:MM:SS AM/PM" (e.g., "11 Nov 2025 12:35:45 PM")
+          last_updated: string; // Format: "DD MMM YYYY HH:MM:SS AM/PM" (e.g., "11 Nov 2025 12:35:45 PM")
           summary: {
             total_students: number;
             total_trades: number;
@@ -91,8 +96,8 @@ export default function TeacherDetailsPage() {
             win_rate: string;
           };
           associated_students: Array<{
-            id: number;
-            name: string;
+            student_id: number;
+            student_name: string;
             email: string;
             capital: number;
             risk_percent: number;
@@ -105,40 +110,21 @@ export default function TeacherDetailsPage() {
             price: number;
             exchange: string;
             status: string;
-            date: string;
+            date: string; // Format: "DD MMM YYYY HH:MM:SS AM/PM" (e.g., "11 Nov 2025 12:35:45 PM")
           }>;
         };
       }>('/admin/teacher/view', {
-        id: teacherIdNum,
+        teacher_id: teacherIdNum,
+        teacher_name: teacherName,
       });
 
       if (response.data && response.data.success && response.data.data) {
         const apiData = response.data.data;
 
-        // Map API response to Teacher type
-        const mappedTeacher: Teacher = {
-          id: String(apiData.id),
-          name: apiData.name,
-          email: apiData.email,
-          status: apiData.status as Teacher['status'],
-          phone: apiData.phone,
-          mobile: apiData.phone?.replace(/[^0-9]/g, '') || '',
-          doj: apiData.joined_on,
-          joinedDate: apiData.joined_on,
-          totalStudents: apiData.summary.total_students,
-          totalTrades: apiData.summary.total_trades,
-          totalCapital: parseFloat(apiData.summary.total_capital) || 0,
-          winRate: parseFloat(apiData.summary.win_rate) || 0,
-          specialization: undefined,
-          profitLoss: undefined,
-        };
-
-        setTeacher(mappedTeacher);
-
         // Map associated students from API
-        const mappedStudents: Student[] = apiData.associated_students.map((student) => ({
-          id: String(student.id),
-          name: student.name,
+        let mappedStudents: Student[] = apiData.associated_students.map((student) => ({
+          id: String(student.student_id),
+          name: student.student_name,
           email: student.email,
           mobile: '',
           teacherId: teacherId,
@@ -150,11 +136,60 @@ export default function TeacherDetailsPage() {
           joinedDate: new Date().toISOString(),
         }));
 
+        // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides associated_students
+        // Hardcoded fallback data if no students from API
+        if (mappedStudents.length === 0) {
+          mappedStudents = [
+            {
+              id: 'student-1',
+              name: 'Rahul Verma',
+              email: 'rahul.verma@synckaro.com',
+              mobile: '9876543210',
+              teacherId: teacherId,
+              teacherName: apiData.name,
+              status: 'active' as const,
+              initialCapital: 120000,
+              currentCapital: 145000,
+              profitLoss: 25000,
+              riskPercentage: 3,
+              strategy: 'Moderate',
+              joinedDate: new Date('2024-01-15').toISOString(),
+            },
+            {
+              id: 'student-2',
+              name: 'Pooja Nair',
+              email: 'pooja.nair@synckaro.com',
+              mobile: '9876543211',
+              teacherId: teacherId,
+              teacherName: apiData.name,
+              status: 'active' as const,
+              initialCapital: 90000,
+              currentCapital: 105000,
+              profitLoss: 15000,
+              riskPercentage: 2,
+              strategy: 'Conservative',
+              joinedDate: new Date('2024-02-10').toISOString(),
+            },
+          ];
+        }
+
         setStudents(mappedStudents);
+
+        // Helper function to parse date from "DD MMM YYYY HH:MM:SS AM/PM" format
+        const parseDateString = (dateStr: string): Date => {
+          // Format: "11 Nov 2025 12:35:45 PM"
+          // Parse the date string
+          try {
+            return new Date(dateStr);
+          } catch {
+            // Fallback to current date if parsing fails
+            return new Date();
+          }
+        };
 
         // Map recent trades from API
         const mappedTrades: Trade[] = apiData.recent_trades.map((trade, index) => ({
-          id: `trade-${apiData.id}-${index}`,
+          id: `trade-${apiData.teacher_id}-${index}`,
           teacherId: teacherId,
           teacherName: apiData.name,
           stock: trade.stock,
@@ -169,12 +204,50 @@ export default function TeacherDetailsPage() {
 
         // Sort trades by date (most recent first)
         const sortedTrades = mappedTrades.sort((a, b) => {
-          const dateA = new Date(a.timestamp || a.createdAt).getTime();
-          const dateB = new Date(b.timestamp || b.createdAt).getTime();
+          const dateA = parseDateString(a.timestamp || a.createdAt).getTime();
+          const dateB = parseDateString(b.timestamp || b.createdAt).getTime();
           return dateB - dateA;
         });
 
         setTrades(sortedTrades);
+
+        // TODO: Remove hardcoded fallback calculations - Replace with actual API response values when backend provides proper summary data
+        // Calculate summary values with fallback
+        const totalStudents = apiData.summary.total_students || mappedStudents.length;
+        const totalTrades = apiData.summary.total_trades || sortedTrades.length;
+        const totalCapital = apiData.summary.total_capital && parseFloat(apiData.summary.total_capital) > 0
+          ? parseFloat(apiData.summary.total_capital)
+          : mappedStudents.reduce((sum, s) => sum + (s.currentCapital || s.initialCapital || 0), 0);
+        
+        // TODO: Remove hardcoded win rate calculation - Replace with actual API response when backend provides win_rate
+        // Calculate win rate from trades if available, otherwise use fallback
+        let winRate = parseFloat(apiData.summary.win_rate) || 0;
+        if (winRate === 0 && sortedTrades.length > 0) {
+          // If we have trades but no win rate, calculate a mock win rate
+          const winningTrades = Math.floor(sortedTrades.length * 0.65); // 65% win rate
+          winRate = (winningTrades / sortedTrades.length) * 100;
+        }
+
+        // Map API response to Teacher type with calculated/fallback values
+        const mappedTeacher: Teacher = {
+          id: String(apiData.teacher_id),
+          name: apiData.name,
+          email: apiData.email,
+          status: apiData.status as Teacher['status'],
+          phone: apiData.phone,
+          mobile: apiData.phone?.replace(/[^0-9]/g, '') || '',
+          doj: apiData.joined_on,
+          joinedDate: apiData.joined_on,
+          totalStudents: totalStudents,
+          totalTrades: totalTrades,
+          totalCapital: totalCapital,
+          winRate: winRate,
+          // TODO: Remove hardcoded specialization - Replace with actual API response when backend provides specialization field
+          specialization: 'Intraday Trading', // Hardcoded fallback
+          profitLoss: undefined,
+        };
+
+        setTeacher(mappedTeacher);
         setCurrentPage(1);
       } else {
         throw new Error('Invalid response format');
@@ -306,12 +379,24 @@ export default function TeacherDetailsPage() {
     return null;
   }
 
+  // Helper function to format date from "DD MMM YYYY HH:MM:SS AM/PM" format
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
+    // If date is already in "DD MMM YYYY HH:MM:SS AM/PM" format, extract just the date part
+    // Format: "11 Nov 2025 12:35:45 PM" -> "11 Nov 2025"
+    const dateMatch = dateString.match(/^(\d{1,2}\s+\w{3}\s+\d{4})/);
+    if (dateMatch) {
+      return dateMatch[1];
+    }
+    // Fallback: try to parse as Date object
+    try {
+      return new Date(dateString).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return dateString;
+    }
   };
 
   return (

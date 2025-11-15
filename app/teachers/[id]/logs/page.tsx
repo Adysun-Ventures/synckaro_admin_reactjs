@@ -53,6 +53,7 @@ export default function TeacherLogsPage() {
     const allLogs = storage.getItem('activityLogs') || [];
     let teacherLogs = allLogs.filter((log: ActivityLog) => log.teacherId === teacherId);
     
+    // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides activity logs
     // Hardcoded fallback data if no logs found
     if (teacherLogs.length === 0) {
       const now = new Date();
