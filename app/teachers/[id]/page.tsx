@@ -120,7 +120,7 @@ export default function TeacherDetailsPage() {
         const apiData = response.data.data;
 
         // Map associated students from API
-        let mappedStudents: Student[] = apiData.associated_students.map((student) => ({
+        const mappedStudents: Student[] = apiData.associated_students.map((student) => ({
           id: String(student.student_id),
           name: student.student_name,
           email: student.email,
@@ -133,43 +133,6 @@ export default function TeacherDetailsPage() {
           riskPercentage: student.risk_percent,
           joinedDate: new Date().toISOString(),
         }));
-
-        // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides associated_students
-        // Hardcoded fallback data if no students from API
-        if (mappedStudents.length === 0) {
-          mappedStudents = [
-            {
-              id: 'student-1',
-              name: 'Rahul Verma',
-              email: 'rahul.verma@synckaro.com',
-              mobile: '9876543210',
-              teacherId: teacherId,
-              teacherName: apiData.name,
-              status: 'active' as const,
-              initialCapital: 120000,
-              currentCapital: 145000,
-              profitLoss: 25000,
-              riskPercentage: 3,
-              strategy: 'Moderate',
-              joinedDate: new Date('2024-01-15').toISOString(),
-            },
-            {
-              id: 'student-2',
-              name: 'Pooja Nair',
-              email: 'pooja.nair@synckaro.com',
-              mobile: '9876543211',
-              teacherId: teacherId,
-              teacherName: apiData.name,
-              status: 'active' as const,
-              initialCapital: 90000,
-              currentCapital: 105000,
-              profitLoss: 15000,
-              riskPercentage: 2,
-              strategy: 'Conservative',
-              joinedDate: new Date('2024-02-10').toISOString(),
-            },
-          ];
-        }
 
         setStudents(mappedStudents);
 
