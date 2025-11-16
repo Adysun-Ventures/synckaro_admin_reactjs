@@ -128,6 +128,7 @@ function createTeachers(): Teacher[] {
     return {
       id: `teacher-${index + 1}`,
       name,
+      doj: joinedDate.toISOString(),
       email: `${toSlug(name)}@synckaro.com`,
       mobile: teacherMobile(index),
       phone: `+91-${teacherMobile(index).slice(0, 5)}-${teacherMobile(index).slice(5)}`,

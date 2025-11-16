@@ -102,7 +102,7 @@ export interface ConnectionRequest {
 export interface ActivityLog {
   id: string;
   teacherId: string;
-  action: 'profile_created' | 'profile_updated' | 'student_added' | 'trade_executed';
+  action: 'profile_created' | 'profile_updated' | 'student_added' | 'trade_executed' | 'teacher_assigned' | 'teacher_reassigned';
   timestamp: string;
   details: string;
 }
