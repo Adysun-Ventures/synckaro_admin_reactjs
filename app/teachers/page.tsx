@@ -342,37 +342,31 @@ export default function TeachersPage() {
     }
 
     try {
-      // Delete all selected teachers via API
-      const deletePromises = selectedIds.map(async (id) => {
-        const teacherIdNum = parseInt(id, 10);
-        if (isNaN(teacherIdNum)) {
-          throw new Error(`Invalid teacher ID: ${id}`);
-        }
-        return apiClient.delete<{
-          status: string;
-          message: string;
-        }>('/admin/teacher/delete', {
-          data: {
-            id: teacherIdNum,
-          },
-        });
+      // Convert selected IDs to numbers
+      const teacherIds = selectedIds
+        .map((id) => parseInt(id, 10))
+        .filter((id) => !isNaN(id));
+
+      if (teacherIds.length === 0) {
+        throw new Error('No valid teacher IDs selected');
+      }
+
+      // Call bulk delete API
+      const response = await apiClient.post<{
+        status: boolean;
+        message: string;
+      }>('/admin/teacher/bulk_delete', {
+        teacher_ids: teacherIds,
       });
 
-      const results = await Promise.all(deletePromises);
-
-      // Check if all deletions were successful
-      const allSuccessful = results.every(
-        (response) => response.data && response.data.message
-      );
-
-      if (allSuccessful) {
+      if (response.data && response.data.status) {
         // Remove from local state
         const updatedTeachers = teachers.filter((t) => !selectedIds.includes(t.id));
         setTeachers(updatedTeachers);
         storage.setItem("teachers", updatedTeachers);
         setSelectedIds([]);
       } else {
-        throw new Error('Some delete operations failed');
+        throw new Error(response.data?.message || 'Bulk delete failed');
       }
     } catch (err: any) {
       console.error('Error deleting teachers:', err);
@@ -392,22 +386,76 @@ export default function TeachersPage() {
     setSelectedIds([]);
   };
 
-  const applyBulkStatusUpdate = (status: Teacher["status"]) => {
+  const applyBulkStatusUpdate = async (status: Teacher["status"]) => {
     if (selectedIds.length === 0) return;
 
-    const updatedTeachers = teachers.map((teacher) =>
-      selectedIds.includes(teacher.id)
-        ? {
-            ...teacher,
-            status,
-          }
-        : teacher
-    );
+    try {
+      // Convert selected IDs to numbers
+      const teacherIds = selectedIds
+        .map((id) => parseInt(id, 10))
+        .filter((id) => !isNaN(id));
 
-    setTeachers(updatedTeachers);
-    storage.setItem("teachers", updatedTeachers);
-    setSelectedIds([]);
-    setBulkStatusConfirm(null);
+      if (teacherIds.length === 0) {
+        throw new Error('No valid teacher IDs selected');
+      }
+
+      let apiEndpoint = '';
+      
+      // Map statuses to API endpoints
+      if (status === 'active' || status === 'live' || status === 'open') {
+        // Activate teachers
+        apiEndpoint = '/admin/teacher/bulk_activate';
+      } else if (status === 'inactive' || status === 'close') {
+        // Deactivate teachers
+        apiEndpoint = '/admin/teacher/bulk_deactivate';
+      } else {
+        // For other statuses (test, etc.), update localStorage only for now
+        // TODO: Add specific bulk endpoints for other statuses if needed
+        const updatedTeachers = teachers.map((teacher) =>
+          selectedIds.includes(teacher.id)
+            ? {
+                ...teacher,
+                status,
+              }
+            : teacher
+        );
+        setTeachers(updatedTeachers);
+        storage.setItem("teachers", updatedTeachers);
+        setSelectedIds([]);
+        setBulkStatusConfirm(null);
+        return;
+      }
+
+      // Call bulk activate/deactivate API
+      const response = await apiClient.post<{
+        status: boolean;
+        message: string;
+      }>(apiEndpoint, {
+        teacher_ids: teacherIds,
+      });
+
+      if (response.data && response.data.status) {
+        // Update local state
+        const updatedTeachers = teachers.map((teacher) =>
+          selectedIds.includes(teacher.id)
+            ? {
+                ...teacher,
+                status,
+              }
+            : teacher
+        );
+        setTeachers(updatedTeachers);
+        storage.setItem("teachers", updatedTeachers);
+        setSelectedIds([]);
+      } else {
+        throw new Error(response.data?.message || 'Bulk status update failed');
+      }
+    } catch (err: any) {
+      console.error('Error updating teacher status:', err);
+      setError(err?.error || err?.message || 'Failed to update teacher status');
+    } finally {
+      setBulkStatusConfirm(null);
+    }
   };
 
   const handleBulkStatus = (status: Teacher["status"]) => {
@@ -452,7 +500,7 @@ export default function TeachersPage() {
                 />
               </div>
             </div>
-            <div className="flex flex-warp item-center gap-3 md:gap-6 mt-3">
+            <div className="flex flex-wrap items-center gap-3 md:gap-6 mt-3">
               <div className="flex-1 text-center">
                 {selectedIds.length > 0 && (
                   <div className="pointer-events-none z-20 flex justify-center px-4">
