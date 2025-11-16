@@ -9,7 +9,8 @@ import {
   PhoneIcon, 
   CalendarIcon,
   ChartBarIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -518,6 +519,12 @@ export default function TeacherDetailsPage() {
                   <Button variant="secondary" size="sm">
                     <ChartBarIcon className="mr-1 h-4 w-4" />
                     View Statistics
+                  </Button>
+                </Link>
+                <Link href={`/teachers/${teacherId}/edit`} className="inline-flex">
+                  <Button variant="secondary" size="sm">
+                    <PencilIcon className="mr-1 h-4 w-4" />
+                    Edit
                   </Button>
                 </Link>
                 <div className="flex items-center gap-2">
