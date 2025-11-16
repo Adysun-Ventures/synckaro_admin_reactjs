@@ -10,6 +10,8 @@ import { storage } from '@/lib/storage';
 import { Student, Trade } from '@/types';
 import { isAuthenticated } from '@/services/authService';
 import { cn } from '@/lib/utils';
+import apiClient from '@/lib/api';
+import { Card } from '@/components/common/Card';
 
 export default function StudentStatsPage() {
   const router = useRouter();
@@ -17,7 +19,10 @@ export default function StudentStatsPage() {
   const studentId = params.id as string;
 
   const [student, setStudent] = useState<Student | null>(null);
+  const [stats, setStats] = useState<any>(null);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isReloading, setIsReloading] = useState(false);
 
   // Check auth
@@ -27,161 +32,167 @@ export default function StudentStatsPage() {
     }
   }, [router]);
 
-  // Load data
-  const loadData = useCallback(() => {
-    const students = storage.getItem('students') || [];
-    const foundStudent = students.find((s: Student) => s.id === studentId);
-    
-    if (!foundStudent) {
-      router.push('/students');
-      return;
-    }
-    
-    setStudent(foundStudent);
+  // Load data from API
+  const loadData = useCallback(async () => {
+    if (!isAuthenticated()) return;
 
-    // Load trades
-    const allTrades = storage.getItem('trades') || [];
-    let studentTrades = allTrades.filter((t: Trade) => t.studentId === studentId);
-    
-    // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides trades data
-    // Hardcoded fallback data if no trades found
-    if (studentTrades.length === 0) {
-      const now = new Date();
-      studentTrades = [
-        {
-          id: 'trade-1',
-          teacherId: foundStudent.teacherId || '',
-          teacherName: foundStudent.teacherName,
-          studentId: studentId,
-          studentName: foundStudent.name,
-          stock: 'INFY',
-          quantity: 30,
-          price: 1610.5,
-          type: 'BUY' as const,
-          exchange: 'NSE' as const,
+    setLoading(true);
+    setError(null);
+
+    try {
+      const studentIdNum = parseInt(studentId, 10);
+      if (isNaN(studentIdNum)) {
+        throw new Error('Invalid student ID');
+      }
+
+      const response = await apiClient.post<{
+        status: boolean;
+        data: {
+          student: {
+            student_id: number;
+            student_name: string;
+            performance_statistics: {
+              total_trades: {
+                count: number;
+                wins: number;
+                losses: number;
+              };
+              win_rate: string;
+              winning_trades: number;
+              total_pnl: number;
+              active_teachers: {
+                count: number;
+                total: number;
+              };
+            };
+            performance_metrics: {
+              average_trade_value: number;
+              most_traded_stock: string;
+              specialization: string;
+              best_performing_day: {
+                pnl: number;
+                date: string;
+              };
+              worst_performing_day: {
+                pnl: number;
+                date: string;
+              };
+              average_pnl_per_trade: number;
+            };
+            teacher_performance_comparison: Array<{
+              teacher_id: number | null;
+              teacher_name: string;
+              teacher_rank_for_student: number;
+              student_pnl_under_teacher: number;
+              student_win_rate_under_teacher: string;
+            }>;
+            recent_trade_history: Array<{
+              date: string;
+              stock: string;
+              trade_type: string;
+              quantity: number;
+              buy_price: number;
+              sell_price: number;
+              pnl: number;
+            }>;
+          };
+        };
+      }>('/admin/student/stats', {
+        student_id: studentIdNum,
+      });
+
+      if (response.data && response.data.status && response.data.data) {
+        const apiData = response.data.data.student;
+
+        // Map student data
+        const mappedStudent: Student = {
+          id: String(apiData.student_id),
+          name: apiData.student_name,
+          email: '',
+          mobile: '',
+          teacherId: '',
+          status: 'active',
+          initialCapital: 0,
+          currentCapital: 0,
+          joinedDate: new Date().toISOString(),
+        };
+        setStudent(mappedStudent);
+
+        // Store stats
+        setStats(apiData);
+
+        // Map recent trades
+        const mappedTrades: Trade[] = apiData.recent_trade_history.map((trade, index) => ({
+          id: `trade-${apiData.student_id}-${index}`,
+          teacherId: '',
+          studentId: String(apiData.student_id),
+          studentName: apiData.student_name,
+          stock: trade.stock,
+          quantity: trade.quantity,
+          price: trade.buy_price || trade.sell_price,
+          type: trade.trade_type as 'BUY' | 'SELL',
+          exchange: 'NSE' as 'NSE' | 'BSE',
           status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: 4500,
-        },
-        {
-          id: 'trade-2',
-          teacherId: foundStudent.teacherId || '',
-          teacherName: foundStudent.teacherName,
-          studentId: studentId,
-          studentName: foundStudent.name,
-          stock: 'TCS',
-          quantity: 20,
-          price: 3680.0,
-          type: 'SELL' as const,
-          exchange: 'BSE' as const,
-          status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: 3200,
-        },
-        {
-          id: 'trade-3',
-          teacherId: foundStudent.teacherId || '',
-          teacherName: foundStudent.teacherName,
-          studentId: studentId,
-          studentName: foundStudent.name,
-          stock: 'RELIANCE',
-          quantity: 15,
-          price: 2450.0,
-          type: 'BUY' as const,
-          exchange: 'NSE' as const,
-          status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: -1800,
-        },
-        {
-          id: 'trade-4',
-          teacherId: foundStudent.teacherId || '',
-          teacherName: foundStudent.teacherName,
-          studentId: studentId,
-          studentName: foundStudent.name,
-          stock: 'HDFCBANK',
-          quantity: 25,
-          price: 1680.0,
-          type: 'SELL' as const,
-          exchange: 'NSE' as const,
-          status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: 2800,
-        },
-        {
-          id: 'trade-5',
-          teacherId: foundStudent.teacherId || '',
-          teacherName: foundStudent.teacherName,
-          studentId: studentId,
-          studentName: foundStudent.name,
-          stock: 'ICICIBANK',
-          quantity: 35,
-          price: 1120.0,
-          type: 'BUY' as const,
-          exchange: 'BSE' as const,
-          status: 'executed' as const,
-          createdAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-          timestamp: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-          pnl: 2100,
-        },
-      ];
+          createdAt: trade.date,
+          timestamp: trade.date,
+          pnl: trade.pnl,
+        }));
+
+        setTrades(mappedTrades);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err: any) {
+      console.error('Error fetching student stats:', err);
+      setError(err?.error || err?.message || 'Failed to fetch student statistics');
+    } finally {
+      setLoading(false);
     }
-    setTrades(studentTrades);
   }, [studentId, router]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleReload = () => {
+  const handleReload = async () => {
     setIsReloading(true);
-    setTimeout(() => {
-      loadData();
+    try {
+      await loadData();
+    } finally {
       setIsReloading(false);
-    }, 200);
+    }
   };
 
-  if (!isAuthenticated() || !student) {
+  if (!isAuthenticated()) {
     return null;
   }
 
-  // Calculate stats
-  const totalTrades = trades.length;
-  const winningTrades = trades.filter(t => (t.pnl ?? 0) > 0).length;
-  const losingTrades = trades.filter(t => (t.pnl ?? 0) < 0).length;
-  const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
-  const totalPnL = trades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
-  const avgTradeValue = totalTrades > 0 
-    ? trades.reduce((sum, t) => sum + ((t.price ?? 0) * t.quantity), 0) / totalTrades 
-    : 0;
+  // Get stats from API data
+  const performanceStats = stats?.performance_statistics;
+  const performanceMetrics = stats?.performance_metrics;
 
-  // Most traded stock
-  const stockCounts: Record<string, number> = {};
-  trades.forEach(t => {
-    stockCounts[t.stock] = (stockCounts[t.stock] || 0) + 1;
-  });
-  const mostTradedStock = Object.entries(stockCounts)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+  // Use API data or fallback to calculated values
+  const totalTrades = performanceStats?.total_trades?.count || trades.length;
+  const winningTrades = performanceStats?.total_trades?.wins || trades.filter(t => (t.pnl ?? 0) > 0).length;
+  const losingTrades = performanceStats?.total_trades?.losses || trades.filter(t => (t.pnl ?? 0) < 0).length;
+  const winRate = performanceStats?.win_rate 
+    ? parseFloat(performanceStats.win_rate.replace('%', '')) 
+    : (totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0);
+  const totalPnL = performanceStats?.total_pnl || trades.reduce((sum, t) => sum + (t.pnl ?? 0), 0);
+  const avgTradeValue = performanceMetrics?.average_trade_value || 0;
+  const mostTradedStock = performanceMetrics?.most_traded_stock || 'N/A';
+  const specialization = performanceMetrics?.specialization || 'N/A';
+  const bestDay = performanceMetrics?.best_performing_day 
+    ? [performanceMetrics.best_performing_day.date, performanceMetrics.best_performing_day.pnl]
+    : ['N/A', 0];
+  const worstDay = performanceMetrics?.worst_performing_day
+    ? [performanceMetrics.worst_performing_day.date, performanceMetrics.worst_performing_day.pnl]
+    : ['N/A', 0];
+  const avgPnlPerTrade = performanceMetrics?.average_pnl_per_trade || 0;
 
-  // Best and worst performing days
-  const dailyPnL: Record<string, number> = {};
-  trades.forEach(t => {
-    const timestamp = t.timestamp ?? t.createdAt;
-    if (!timestamp) return;
-    const date = new Date(timestamp).toLocaleDateString('en-IN');
-    dailyPnL[date] = (dailyPnL[date] || 0) + (t.pnl ?? 0);
-  });
-  const sortedDays = Object.entries(dailyPnL).sort((a, b) => b[1] - a[1]);
-  const bestDay = sortedDays[0] || ['N/A', 0];
-  const worstDay = sortedDays[sortedDays.length - 1] || ['N/A', 0];
-
-  // Capital metrics
-  const initialCapital = student.initialCapital || 0;
-  const currentCapital = student.currentCapital || 0;
+  // Capital metrics - these might not be in the stats API, keep calculated for now
+  const initialCapital = student?.initialCapital || 0;
+  const currentCapital = student?.currentCapital || 0;
   const capitalPnL = currentCapital - initialCapital;
   const capitalPnLPercentage = initialCapital > 0 ? ((capitalPnL / initialCapital) * 100) : 0;
 
@@ -194,7 +205,7 @@ export default function StudentStatsPage() {
   };
 
   return (
-    <DashboardLayout title={`${student.name} - Statistics`}>
+    <DashboardLayout title={student ? `${student.name} - Statistics` : 'Student Statistics'}>
       <div className="space-y-6">
         {/* Header Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
@@ -232,11 +243,31 @@ export default function StudentStatsPage() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <Card padding="lg">
+            <div className="bg-danger-50 border border-danger-200 rounded-xl p-4">
+              <p className="text-sm text-danger-600">{error}</p>
+            </div>
+          </Card>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <Card padding="lg">
+            <div className="flex flex-col items-center justify-center py-12">
+              <ArrowPathIcon className="h-8 w-8 text-primary-600 animate-spin mb-4" />
+              <p className="text-sm text-neutral-600">Loading student statistics...</p>
+            </div>
+          </Card>
+        )}
+
         {/* Content Container */}
+        {!loading && student && stats && (
         <div className="bg-white rounded-xl border border-neutral-200 p-6 space-y-6">
           {/* Student Name */}
           <div className="text-center">
-            <h2 className="text-2xl font-semibold text-neutral-900">{student.name}</h2>
+            <h2 className="text-2xl font-semibold text-neutral-900">{stats.student_name || student.name}</h2>
             <p className="text-neutral-600">Performance Statistics</p>
           </div>
 
@@ -379,10 +410,14 @@ export default function StudentStatsPage() {
                 <span className="text-sm text-neutral-600">Average P&L per Trade</span>
                 <span className={cn(
                   'font-semibold',
-                  totalPnL >= 0 ? 'text-success-600' : 'text-danger-600'
+                  avgPnlPerTrade >= 0 ? 'text-success-600' : 'text-danger-600'
                 )}>
-                  {formatCurrency(totalTrades > 0 ? totalPnL / totalTrades : 0)}
+                  {formatCurrency(avgPnlPerTrade)}
                 </span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-neutral-100">
+                <span className="text-sm text-neutral-600">Specialization</span>
+                <span className="font-semibold text-neutral-900">{specialization}</span>
               </div>
             </div>
           </div>
@@ -412,12 +447,26 @@ export default function StudentStatsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {trades.slice(0, 10).map((trade) => {
+                {trades.map((trade) => {
+                  // API returns date in "DD/MM/YYYY" format, try to parse it
                   const tradeDate = trade.timestamp || trade.createdAt;
+                  let displayDate = 'N/A';
+                  if (tradeDate) {
+                    try {
+                      // Try parsing DD/MM/YYYY format
+                      if (tradeDate.includes('/')) {
+                        displayDate = tradeDate;
+                      } else {
+                        displayDate = new Date(tradeDate).toLocaleDateString('en-IN');
+                      }
+                    } catch {
+                      displayDate = tradeDate;
+                    }
+                  }
                   return (
                   <TableRow key={trade.id}>
                     <TableCell className="text-neutral-600">
-                      {tradeDate ? new Date(tradeDate).toLocaleDateString('en-IN') : 'N/A'}
+                      {displayDate}
                     </TableCell>
                     <TableCell className="font-medium text-neutral-900">
                       {trade.stock}
@@ -458,6 +507,7 @@ export default function StudentStatsPage() {
           )}
         </div>
         </div>
+        )}
       </div>
     </DashboardLayout>
   );
