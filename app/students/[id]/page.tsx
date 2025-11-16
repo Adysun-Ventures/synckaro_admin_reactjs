@@ -11,6 +11,7 @@ import {
   ChartBarIcon,
   ArrowPathIcon,
   ClockIcon,
+  PencilIcon,
 } from '@heroicons/react/24/outline';
 
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -356,7 +357,7 @@ export default function StudentProfilePage() {
           tone="neutral"
           hover
           header={
-            <>
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="flex items-center gap-3">
                 <Avatar
                   name={student.name}
@@ -403,12 +404,18 @@ export default function StudentProfilePage() {
                     </Button>
                   </Link>
                 )}
+                <Link href={`/students/${studentId}/edit`} className="inline-flex">
+                  <Button variant="secondary" size="sm">
+                    <PencilIcon className="mr-1 h-4 w-4" />
+                    Edit
+                  </Button>
+                </Link>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-neutral-600">Status</span>
                   <Toggle enabled={student.status === 'active'} onChange={handleStatusToggle} />
                 </div>
               </div>
-            </>
+            </div>
           }
           footer={
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500">
