@@ -344,13 +344,45 @@ export default function TeacherDetailsPage() {
   };
 
   // Toggle student status
-  const handleToggleStudentStatus = (studentId: string, newStatus: 'active' | 'inactive') => {
-    const allStudents = storage.getItem('students') || [];
-    const updatedStudents = allStudents.map((s: Student) =>
-      s.id === studentId ? { ...s, status: newStatus } : s
-    );
-    storage.setItem('students', updatedStudents);
-    setStudents(updatedStudents.filter((s: Student) => s.teacherId === teacherId));
+  const handleToggleStudentStatus = async (studentId: string, newStatus: 'active' | 'inactive') => {
+    try {
+      const studentIdNum = parseInt(studentId, 10);
+      if (isNaN(studentIdNum)) {
+        throw new Error('Invalid student ID');
+      }
+
+      // API expects status: 0 for inactive, 1 for active
+      const statusValue = newStatus === 'active' ? 1 : 0;
+
+      // Call toggle status API
+      const response = await apiClient.patch<{
+        status: number;
+        message: string;
+      }>('/admin/student/toggle_status', {
+        status: statusValue,
+        student_id: studentIdNum,
+      });
+
+      if (response.data && response.data.message) {
+        // Update student status in state
+        const updatedStudents = students.map((s) =>
+          s.id === studentId ? { ...s, status: newStatus } : s
+        );
+        setStudents(updatedStudents);
+
+        // Also update in localStorage if needed
+        const allStudents = storage.getItem('students') || [];
+        const updatedAllStudents = allStudents.map((s: Student) =>
+          s.id === studentId ? { ...s, status: newStatus } : s
+        );
+        storage.setItem('students', updatedAllStudents);
+      } else {
+        throw new Error('Failed to update student status');
+      }
+    } catch (err: any) {
+      console.error('Error toggling student status:', err);
+      setError(err?.error || err?.message || 'Failed to update student status');
+    }
   };
 
   const handleReload = () => {
