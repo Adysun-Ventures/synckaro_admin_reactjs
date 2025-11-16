@@ -17,8 +17,10 @@ import { storage } from '@/lib/storage';
 import { Student, ActivityLog } from '@/types';
 import { isAuthenticated } from '@/services/authService';
 import { cn } from '@/lib/utils';
+import apiClient from '@/lib/api';
+import { Card } from '@/components/common/Card';
 
-type ActionType = 'all' | 'trade_executed' | 'profile_updated' | 'profile_created';
+type ActionType = 'all' | 'trade_executed' | 'profile_updated' | 'profile_created' | 'teacher_assigned' | 'teacher_reassigned';
 
 export default function StudentLogsPage() {
   const router = useRouter();
@@ -28,6 +30,8 @@ export default function StudentLogsPage() {
   const [student, setStudent] = useState<Student | null>(null);
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [filterAction, setFilterAction] = useState<ActionType>('all');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isReloading, setIsReloading] = useState(false);
 
   // Check auth
@@ -37,100 +41,131 @@ export default function StudentLogsPage() {
     }
   }, [router]);
 
-  // Load data
-  const loadData = useCallback(() => {
-    const students = storage.getItem('students') || [];
-    const foundStudent = students.find((s: Student) => s.id === studentId);
-    
-    if (!foundStudent) {
-      router.push('/students');
-      return;
-    }
-    
-    setStudent(foundStudent);
+  // Load data from API
+  const loadData = useCallback(async () => {
+    if (!isAuthenticated()) return;
 
-    // Load activity logs for this student
-    // Note: ActivityLog type has teacherId, but we'll filter by studentId if available
-    // For now, we'll create student-specific logs
-    const allLogs = storage.getItem('activityLogs') || [];
-    // Filter logs that might be related to this student (if logs have studentId field)
-    // Since ActivityLog type doesn't have studentId, we'll use hardcoded fallback
-    let studentLogs: ActivityLog[] = [];
-    
-    // TODO: Remove hardcoded fallback - Replace with actual API response when backend provides activity logs
-    // Hardcoded fallback data if no logs found
-    if (studentLogs.length === 0) {
-      const now = new Date();
-      studentLogs = [
-        {
-          id: 'log-1',
-          teacherId: foundStudent.teacherId || '',
-          action: 'trade_executed' as const,
-          timestamp: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-          details: 'Executed BUY order for INFY - 30 shares at ₹1,610.50',
-        },
-        {
-          id: 'log-2',
-          teacherId: foundStudent.teacherId || '',
-          action: 'profile_updated' as const,
-          timestamp: new Date(now.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
-          details: 'Updated profile information: Changed risk percentage to 3%',
-        },
-        {
-          id: 'log-3',
-          teacherId: foundStudent.teacherId || '',
-          action: 'trade_executed' as const,
-          timestamp: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-          details: 'Executed SELL order for TCS - 20 shares at ₹3,680.00',
-        },
-        {
-          id: 'log-4',
-          teacherId: foundStudent.teacherId || '',
-          action: 'profile_updated' as const,
-          timestamp: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-          details: 'Updated capital allocation: Increased initial capital to ₹1,20,000',
-        },
-        {
-          id: 'log-5',
-          teacherId: foundStudent.teacherId || '',
-          action: 'trade_executed' as const,
-          timestamp: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
-          details: 'Executed BUY order for RELIANCE - 15 shares at ₹2,450.00',
-        },
-        {
-          id: 'log-6',
-          teacherId: foundStudent.teacherId || '',
-          action: 'trade_executed' as const,
-          timestamp: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days ago
-          details: 'Executed SELL order for HDFCBANK - 25 shares at ₹1,680.00',
-        },
-        {
-          id: 'log-7',
-          teacherId: foundStudent.teacherId || '',
-          action: 'profile_created' as const,
-          timestamp: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago
-          details: 'Student profile created and activated in the system',
-        },
-      ];
+    setLoading(true);
+    setError(null);
+
+    try {
+      const studentIdNum = parseInt(studentId, 10);
+      if (isNaN(studentIdNum)) {
+        throw new Error('Invalid student ID');
+      }
+
+      const response = await apiClient.post<{
+        success: boolean;
+        data: {
+          trades: Array<{
+            id: number;
+            student_id: number;
+            action: string;
+            timestamp: string;
+            details: string;
+          }>;
+          teachers: Array<{
+            id: number;
+            student_id: number;
+            action: string;
+            timestamp: string;
+            details: string;
+          }>;
+          profile_updates: Array<{
+            id: number;
+            student_id: number;
+            action: string;
+            timestamp: string;
+            details: string;
+          }>;
+        };
+      }>('/admin/student/logs', {
+        student_id: studentIdNum,
+      });
+
+      if (response.data && response.data.success && response.data.data) {
+        const apiData = response.data.data;
+
+        // Map student data (we'll get basic info from API if needed, for now use minimal)
+        const mappedStudent: Student = {
+          id: String(studentIdNum),
+          name: 'Student',
+          email: '',
+          mobile: '',
+          teacherId: '',
+          status: 'active',
+          initialCapital: 0,
+          currentCapital: 0,
+          joinedDate: new Date().toISOString(),
+        };
+        setStudent(mappedStudent);
+
+        // Combine all logs into one array
+        const allLogs: ActivityLog[] = [
+          ...apiData.trades.map((log) => ({
+            id: String(log.id),
+            teacherId: '',
+            action: log.action as ActivityLog['action'],
+            timestamp: log.timestamp,
+            details: log.details,
+          })),
+          ...apiData.teachers.map((log) => ({
+            id: String(log.id),
+            teacherId: '',
+            action: log.action as ActivityLog['action'],
+            timestamp: log.timestamp,
+            details: log.details,
+          })),
+          ...apiData.profile_updates.map((log) => ({
+            id: String(log.id),
+            teacherId: '',
+            action: log.action as ActivityLog['action'],
+            timestamp: log.timestamp,
+            details: log.details,
+          })),
+        ];
+
+        // Sort by timestamp (most recent first)
+        const sortedLogs = allLogs.sort((a, b) => {
+          const dateA = new Date(a.timestamp).getTime();
+          const dateB = new Date(b.timestamp).getTime();
+          return dateB - dateA;
+        });
+
+        setLogs(sortedLogs);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err: any) {
+      console.error('Error fetching student logs:', err);
+      setError(err?.error || err?.message || 'Failed to fetch student logs');
+    } finally {
+      setLoading(false);
     }
-    setLogs(studentLogs);
   }, [studentId, router]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleReload = () => {
+  const handleReload = async () => {
     setIsReloading(true);
-    setTimeout(() => {
-      loadData();
+    try {
+      await loadData();
+    } finally {
       setIsReloading(false);
-    }, 200);
+    }
   };
 
   // Filter logs
   const filteredLogs = useMemo(() => {
     if (filterAction === 'all') return logs;
+    if (filterAction === 'profile_updated') {
+      return logs.filter(log => log.action === 'profile_updated' || log.action === 'profile_created');
+    }
+    if (filterAction === 'teacher_assigned') {
+      return logs.filter(log => log.action === 'teacher_assigned' || log.action === 'teacher_reassigned');
+    }
     return logs.filter(log => log.action === filterAction);
   }, [logs, filterAction]);
 
@@ -163,7 +198,7 @@ export default function StudentLogsPage() {
     window.URL.revokeObjectURL(url);
   };
 
-  if (!isAuthenticated() || !student) {
+  if (!isAuthenticated()) {
     return null;
   }
 
@@ -174,6 +209,9 @@ export default function StudentLogsPage() {
       case 'profile_updated':
       case 'profile_created':
         return <UserCircleIcon className="h-5 w-5 text-warning-600" />;
+      case 'teacher_assigned':
+      case 'teacher_reassigned':
+        return <UserPlusIcon className="h-5 w-5 text-success-600" />;
       default:
         return <ChartBarIcon className="h-5 w-5 text-neutral-400" />;
     }
@@ -186,6 +224,9 @@ export default function StudentLogsPage() {
       case 'profile_updated':
       case 'profile_created':
         return 'bg-warning-100';
+      case 'teacher_assigned':
+      case 'teacher_reassigned':
+        return 'bg-success-100';
       default:
         return 'bg-neutral-100';
     }
@@ -207,7 +248,7 @@ export default function StudentLogsPage() {
   };
 
   return (
-    <DashboardLayout title={`${student.name} - Activity Logs`}>
+    <DashboardLayout title={student ? `${student.name} - Activity Logs` : 'Student Activity Logs'}>
       <div className="space-y-6">
         {/* Header Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
@@ -254,7 +295,27 @@ export default function StudentLogsPage() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <Card padding="lg">
+            <div className="bg-danger-50 border border-danger-200 rounded-xl p-4">
+              <p className="text-sm text-danger-600">{error}</p>
+            </div>
+          </Card>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <Card padding="lg">
+            <div className="flex flex-col items-center justify-center py-12">
+              <ArrowPathIcon className="h-8 w-8 text-primary-600 animate-spin mb-4" />
+              <p className="text-sm text-neutral-600">Loading activity logs...</p>
+            </div>
+          </Card>
+        )}
+
         {/* Filters */}
+        {!loading && (
         <div className="bg-white rounded-xl border border-neutral-200 p-4">
           <div className="flex items-center gap-4">
             <label className="text-sm font-medium text-neutral-700">Filter by Action:</label>
@@ -292,11 +353,24 @@ export default function StudentLogsPage() {
               >
                 Profile Updates ({logs.filter(l => l.action === 'profile_updated' || l.action === 'profile_created').length})
               </button>
+              <button
+                onClick={() => setFilterAction('teacher_assigned')}
+                className={cn(
+                  'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
+                  filterAction === 'teacher_assigned'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                )}
+              >
+                Teacher ({logs.filter(l => l.action === 'teacher_assigned' || l.action === 'teacher_reassigned').length})
+              </button>
             </div>
           </div>
         </div>
+        )}
 
         {/* Activity Timeline */}
+        {!loading && (
         <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
           {filteredLogs.length === 0 ? (
             <EmptyState
@@ -335,9 +409,10 @@ export default function StudentLogsPage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Summary */}
-        {filteredLogs.length > 0 && (
+        {!loading && filteredLogs.length > 0 && (
           <div className="text-center text-sm text-neutral-500">
             Showing {filteredLogs.length} of {logs.length} total activities
           </div>
