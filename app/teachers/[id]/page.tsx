@@ -16,6 +16,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/common/Button';
 import { Avatar } from '@/components/common/Avatar';
 import { Card } from '@/components/common/Card';
+import { Toggle } from '@/components/common/Toggle';
 import { StudentCard } from '@/components/teachers/StudentCard';
 import { CompactTradeRow } from '@/components/teachers/CompactTradeRow';
 import { TradeListHeader } from '@/components/teachers/TradeListHeader';
@@ -297,6 +298,51 @@ export default function TeacherDetailsPage() {
     }
   };
 
+  // Toggle teacher status
+  const handleToggleTeacherStatus = async (enabled: boolean) => {
+    if (!teacher) return;
+
+    try {
+      const teacherIdNum = parseInt(teacherId, 10);
+      if (isNaN(teacherIdNum)) {
+        throw new Error('Invalid teacher ID');
+      }
+
+      // API expects status: 0 for inactive, 1 for active
+      const statusValue = enabled ? 1 : 0;
+
+      // Call toggle status API
+      const response = await apiClient.patch<{
+        status: number;
+        message: string;
+      }>('/admin/teacher/toggle_status', {
+        status: statusValue,
+        teacher_id: teacherIdNum,
+      });
+
+      if (response.data && response.data.message) {
+        // Update teacher status in state
+        const newStatus = enabled ? 'active' : 'inactive';
+        setTeacher({
+          ...teacher,
+          status: newStatus as Teacher['status'],
+        });
+
+        // Also update in localStorage if needed
+        const teachers = storage.getItem('teachers') || [];
+        const updatedTeachers = teachers.map((t: Teacher) =>
+          t.id === teacherId ? { ...t, status: newStatus as Teacher['status'] } : t
+        );
+        storage.setItem('teachers', updatedTeachers);
+      } else {
+        throw new Error('Failed to update teacher status');
+      }
+    } catch (err: any) {
+      console.error('Error toggling teacher status:', err);
+      setError(err?.error || err?.message || 'Failed to update teacher status');
+    }
+  };
+
   // Toggle student status
   const handleToggleStudentStatus = (studentId: string, newStatus: 'active' | 'inactive') => {
     const allStudents = storage.getItem('students') || [];
@@ -407,7 +453,7 @@ export default function TeacherDetailsPage() {
           tone="neutral"
           hover
           header={
-            <>
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="flex items-center gap-3">
                 <Avatar
                   name={teacher.name}
@@ -419,22 +465,22 @@ export default function TeacherDetailsPage() {
                   <h1 className="text-2xl font-bold text-neutral-900">{teacher.name}</h1>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-neutral-500">
                     <div className="flex items-center gap-2">
-                    <EnvelopeIcon className="h-4 w-4" />
-                    <span>{teacher.email}</span>
-                  </div>
-                  {teacher.phone && (
-                      <div className="flex items-center gap-2">
-                      <PhoneIcon className="h-4 w-4" />
-                      <span>{teacher.phone}</span>
+                      <EnvelopeIcon className="h-4 w-4" />
+                      <span>{teacher.email}</span>
                     </div>
-                  )}
+                    {teacher.phone && (
+                      <div className="flex items-center gap-2">
+                        <PhoneIcon className="h-4 w-4" />
+                        <span>{teacher.phone}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4" />
-                    <span>Joined {formatDate(teacher.joinedDate)}</span>
+                      <CalendarIcon className="h-4 w-4" />
+                      <span>Joined {formatDate(teacher.joinedDate)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Link href={`/teachers/${teacherId}/stats`} className="inline-flex">
                   <Button variant="secondary" size="sm">
@@ -442,12 +488,19 @@ export default function TeacherDetailsPage() {
                     View Statistics
                   </Button>
                 </Link>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-neutral-600">Status</span>
+                  <Toggle
+                    enabled={teacher.status === 'active' || teacher.status === 'live'}
+                    onChange={handleToggleTeacherStatus}
+                  />
+                </div>
                 <Button variant="danger" size="sm" onClick={() => setDeleteConfirmOpen(true)}>
                   <TrashIcon className="mr-1 h-4 w-4" />
-                Delete
-              </Button>
+                  Delete
+                </Button>
               </div>
-            </>
+            </div>
           }
           footer={
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-neutral-500">
