@@ -272,7 +272,7 @@ export default function TeacherDetailsPage() {
         message: string;
       }>('/admin/teacher/delete', {
         data: {
-          id: teacherIdNum,
+          teacher_id: teacherIdNum,
         },
       });
 
