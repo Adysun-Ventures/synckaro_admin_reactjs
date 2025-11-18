@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { UserCircleIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { storage } from '@/lib/storage';
+import { logout } from '@/services/authService';
 import { cn } from '@/lib/utils';
 
 interface HeaderProps {
@@ -46,8 +47,8 @@ export function Header({ title = 'Dashboard' }: HeaderProps) {
     };
   }, [isOpen]);
 
-  const handleLogout = () => {
-    storage.clearAuth();
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 

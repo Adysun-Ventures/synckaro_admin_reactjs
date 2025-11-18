@@ -118,8 +118,8 @@ apiClient.interceptors.response.use(
 
     // Handle authentication errors (401 Unauthorized)
     if (status === 401) {
-      // Clear auth data and logout
-      logout();
+      // Clear auth data and logout (fire and forget)
+      void logout();
 
       // Redirect to login page (only in browser)
       if (typeof window !== 'undefined') {
@@ -192,7 +192,8 @@ export function setAuthToken(token: string | null): void {
  * Helper function to clear token
  */
 export function clearAuthToken(): void {
-  logout();
+  // Fire and forget - logout will clear storage even if API call fails
+  void logout();
 }
 
 /**

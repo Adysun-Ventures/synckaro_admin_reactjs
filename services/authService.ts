@@ -158,8 +158,18 @@ export async function resendOTP(mobile: string): Promise<{ success: boolean; err
 /**
  * Logout current user
  */
-export function logout(): void {
-  storage.clearAuth();
+export async function logout(): Promise<void> {
+  try {
+    // Call the logout API endpoint
+    await apiClient.post<{ message: string }>('/common/logout');
+  } catch (error) {
+    // Even if API call fails, we should still clear local auth
+    // This ensures user can logout even if backend is unavailable
+    console.error('Logout API call failed:', error);
+  } finally {
+    // Always clear local storage regardless of API call result
+    storage.clearAuth();
+  }
 }
 
 /**
