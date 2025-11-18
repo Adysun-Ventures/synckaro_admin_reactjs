@@ -102,16 +102,17 @@ function LoginForm() {
     <div className="w-full max-w-md">
       <div className="bg-white rounded-xl shadow-lg p-8">
         {/* Logo */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4">
           <Logo />
         </div>
 
+      
         {/* Mobile Step */}
         {step === 'mobile' && (
           <div className="space-y-6">
             <div className="text-center">
               <h1 className="text-2xl font-semibold text-neutral-900 mb-2">
-                Welcome Back
+              Admin Dashboard
               </h1>
               <p className="text-sm text-neutral-500">
                 Enter your mobile number to continue
@@ -145,9 +146,6 @@ function LoginForm() {
               </Button>
             </div>
 
-            <div className="text-center text-xs text-neutral-500">
-              <p>Demo credentials: 9999999999</p>
-            </div>
           </div>
         )}
 
