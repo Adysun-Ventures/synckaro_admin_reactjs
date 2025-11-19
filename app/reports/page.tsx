@@ -447,7 +447,8 @@ export default function ReportsPage() {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.8fr)]">
+        <div className="grid gap-6 lg:grid-cols-2">
+        {/* [minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.8fr)] */}
           <Card
             padding="lg"
             tone="neutral"
@@ -511,7 +512,7 @@ export default function ReportsPage() {
             </div>
           </Card>
 
-          <Card
+          {/* <Card
             padding="lg"
             tone="neutral"
             hover
@@ -556,7 +557,7 @@ export default function ReportsPage() {
                 ))}
               </div>
             </div>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </DashboardLayout>
