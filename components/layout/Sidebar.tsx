@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   HomeIcon,
   UserGroupIcon,
+  AcademicCapIcon,
   Cog6ToothIcon,
   ChartBarIcon,
 } from '@heroicons/react/24/outline';
@@ -14,6 +15,7 @@ import { cn } from '@/lib/utils';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Teachers', href: '/teachers', icon: UserGroupIcon },
+  { name: 'Students', href: '/students', icon: AcademicCapIcon },
   { name: 'Reports', href: '/reports', icon: ChartBarIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
