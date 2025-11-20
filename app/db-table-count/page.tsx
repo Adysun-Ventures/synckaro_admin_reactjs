@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+  import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -31,6 +32,7 @@ export default function DbTableCountPage() {
   const { isAuthenticated, token, isLoading: authLoading } = useAuth();
   const [tableCounts, setTableCounts] = useState<TableCountEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,37 +41,49 @@ export default function DbTableCountPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  const fetchTableCounts = useCallback(async () => {
+  const fetchTableCounts = useCallback(
+    async (options: { silent?: boolean } = {}) => {
+      const { silent = false } = options;
     if (!isAuthenticated || !token) return;
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await apiClient.post<TableCountsResponse>(
-        '/admin/db/table-counts',
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.data && Array.isArray(response.data.data)) {
-        setTableCounts(response.data.data);
+      if (silent) {
+        setRefreshing(true);
       } else {
-        throw new Error('Invalid response format');
+        setLoading(true);
       }
-    } catch (err: any) {
-      console.error('Error fetching table counts:', err);
-      const message =
-        err?.response?.data?.message || err?.message || 'Failed to fetch table counts';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, token]);
+      setError(null);
+
+      try {
+        const response = await apiClient.post<TableCountsResponse>(
+          '/admin/db/table-counts',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data && Array.isArray(response.data.data)) {
+          setTableCounts(response.data.data);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (err: any) {
+        console.error('Error fetching table counts:', err);
+        const message =
+          err?.response?.data?.message || err?.message || 'Failed to fetch table counts';
+        setError(message);
+      } finally {
+        if (silent) {
+          setRefreshing(false);
+        } else {
+          setLoading(false);
+        }
+      }
+    },
+    [isAuthenticated, token]
+  );
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && token) {
@@ -125,23 +139,14 @@ export default function DbTableCountPage() {
                 <div className="text-2xl font-semibold text-neutral-900">
                   Database Table Counts
                 </div>
-                <p className="text-sm text-neutral-500">
-                  Data sourced from{' '}
-                  <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">
-                    /admin/db/table-counts
-                  </code>
-                </p>
               </div>
               <div className="flex w-full justify-start md:w-auto md:justify-end">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={fetchTableCounts}
-                  disabled={loading}
-                  className="w-full md:w-auto"
+                <span
+                  onClick={() => fetchTableCounts({ silent: true })}
+                  className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full border border-neutral-300 bg-white text-neutral-700"
                 >
-                  Refresh
-                </Button>
+                  <ArrowPathIcon className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </span>
               </div>
             </div>
           </div>

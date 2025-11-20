@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/common/Card';
-import { Button } from '@/components/common/Button';
 import {
   Table,
   TableHeader,
@@ -33,6 +33,7 @@ export default function ApiUsagePage() {
   const { isAuthenticated, token, isLoading: authLoading } = useAuth();
   const [logs, setLogs] = useState<ApiLogEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,37 +42,49 @@ export default function ApiUsagePage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  const fetchApiLogs = useCallback(async () => {
+  const fetchApiLogs = useCallback(
+    async (options: { silent?: boolean } = {}) => {
+      const { silent = false } = options;
     if (!isAuthenticated || !token) return;
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await apiClient.post<ApiLogsResponse>(
-        '/admin/api-logs',
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.data && Array.isArray(response.data.data)) {
-        setLogs(response.data.data);
+      if (silent) {
+        setRefreshing(true);
       } else {
-        throw new Error('Invalid response format');
+        setLoading(true);
       }
-    } catch (err: any) {
-      console.error('Error fetching API logs:', err);
-      const message =
-        err?.response?.data?.message || err?.message || 'Failed to fetch API logs';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, token]);
+      setError(null);
+
+      try {
+        const response = await apiClient.post<ApiLogsResponse>(
+          '/admin/api-logs',
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data && Array.isArray(response.data.data)) {
+          setLogs(response.data.data);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (err: any) {
+        console.error('Error fetching API logs:', err);
+        const message =
+          err?.response?.data?.message || err?.message || 'Failed to fetch API logs';
+        setError(message);
+      } finally {
+        if (silent) {
+          setRefreshing(false);
+        } else {
+          setLoading(false);
+        }
+      }
+    },
+    [isAuthenticated, token]
+  );
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && token) {
@@ -123,26 +136,19 @@ export default function ApiUsagePage() {
                 <div className="text-2xl font-semibold text-neutral-900">
                   API Invocation Logs
                 </div>
-                <p className="text-sm text-neutral-500">
-                  Latest data from{' '}
-                  <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">/admin/api-logs</code>
-                </p>
               </div>
               <div className="flex w-full justify-start md:w-auto md:justify-end">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={fetchApiLogs}
-                  disabled={loading}
-                  className="w-full md:w-auto"
+                <span
+                  onClick={() => fetchApiLogs({ silent: true })}
+                  className="cursor-pointer flex h-7 w-7 items-center justify-center rounded-full border border-neutral-300 bg-white text-neutral-700"
                 >
-                  Refresh
-                </Button>
+                  <ArrowPathIcon className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                </span>
               </div>
             </div>
           </div>
           <div className="overflow-x-auto">
-            <div className="max-h-[600px] overflow-y-auto">
+            <div className="max-h-[599px] overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
