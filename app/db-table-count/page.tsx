@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-  import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowPathIcon,
+  ArrowsUpDownIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from '@heroicons/react/24/outline';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -27,6 +32,9 @@ type TableCountsResponse = {
   data: TableCountEntry[];
 };
 
+type TableSortField = 'table_name' | 'count';
+type SortDirection = 'asc' | 'desc';
+
 export default function DbTableCountPage() {
   const router = useRouter();
   const { isAuthenticated, token, isLoading: authLoading } = useAuth();
@@ -34,6 +42,13 @@ export default function DbTableCountPage() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    field: TableSortField;
+    direction: SortDirection;
+  }>({
+    field: 'count',
+    direction: 'desc',
+  });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -96,6 +111,43 @@ export default function DbTableCountPage() {
     () => tableCounts.reduce((sum, entry) => sum + (entry.count || 0), 0),
     [tableCounts]
   );
+  const sortedTableCounts = useMemo(() => {
+    const sorted = [...tableCounts];
+    sorted.sort((a, b) => {
+      const { field, direction } = sortConfig;
+      const orderMultiplier = direction === 'asc' ? 1 : -1;
+
+      if (field === 'table_name') {
+        return a.table_name.localeCompare(b.table_name) * orderMultiplier;
+      }
+
+      const valueA = a.count || 0;
+      const valueB = b.count || 0;
+      return (valueA - valueB) * orderMultiplier;
+    });
+    return sorted;
+  }, [tableCounts, sortConfig]);
+  const renderSortIcon = (field: TableSortField) => {
+    if (sortConfig.field !== field) {
+      return <ArrowsUpDownIcon className="h-4 w-4 text-neutral-300" />;
+    }
+    return sortConfig.direction === 'asc' ? (
+      <ChevronUpIcon className="h-4 w-4 text-neutral-500" />
+    ) : (
+      <ChevronDownIcon className="h-4 w-4 text-neutral-500" />
+    );
+  };
+  const toggleSort = (field: TableSortField) => {
+    setSortConfig((prev) => {
+      if (prev.field === field) {
+        return {
+          field,
+          direction: prev.direction === 'asc' ? 'desc' : 'asc',
+        };
+      }
+      return { field, direction: 'desc' };
+    });
+  };
   const busiestTable = useMemo(() => {
     if (!tableCounts.length) return null;
     return tableCounts.reduce((prev, curr) => (curr.count > prev.count ? curr : prev));
@@ -155,8 +207,24 @@ export default function DbTableCountPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Table Name</TableHead>
-                    <TableHead className="text-right">Row Count</TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none"
+                      onClick={() => toggleSort('table_name')}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        Table Name
+                        {renderSortIcon('table_name')}
+                      </span>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none text-right"
+                      onClick={() => toggleSort('count')}
+                    >
+                      <span className="inline-flex items-center gap-1 justify-end">
+                        Row Count
+                        {renderSortIcon('count')}
+                      </span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -175,7 +243,7 @@ export default function DbTableCountPage() {
                     </TableRow>
                   )}
                   {!error &&
-                    tableCounts.map((entry) => (
+                    sortedTableCounts.map((entry) => (
                       <TableRow key={entry.table_name}>
                         <TableCell className="font-medium text-neutral-900">
                           {entry.table_name}

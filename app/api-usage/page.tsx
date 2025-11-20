@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowPathIcon,
+  ArrowsUpDownIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from '@heroicons/react/24/outline';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/common/Card';
 import {
@@ -28,6 +33,9 @@ type ApiLogsResponse = {
   data: ApiLogEntry[];
 };
 
+type ApiSortField = 'hit_count' | 'execution_time_ms';
+type SortDirection = 'asc' | 'desc';
+
 export default function ApiUsagePage() {
   const router = useRouter();
   const { isAuthenticated, token, isLoading: authLoading } = useAuth();
@@ -35,6 +43,13 @@ export default function ApiUsagePage() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    field: ApiSortField;
+    direction: SortDirection;
+  }>({
+    field: 'hit_count',
+    direction: 'desc',
+  });
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -102,6 +117,38 @@ export default function ApiUsagePage() {
     const totalTime = logs.reduce((sum, log) => sum + (log.execution_time_ms || 0), 0);
     return totalTime / logs.length;
   }, [logs]);
+  const sortedLogs = useMemo(() => {
+    const sorted = [...logs];
+    sorted.sort((a, b) => {
+      const { field, direction } = sortConfig;
+      const orderMultiplier = direction === 'asc' ? 1 : -1;
+      const valueA = a[field] || 0;
+      const valueB = b[field] || 0;
+      return (valueA - valueB) * orderMultiplier;
+    });
+    return sorted;
+  }, [logs, sortConfig]);
+  const renderSortIcon = (field: ApiSortField) => {
+    if (sortConfig.field !== field) {
+      return <ArrowsUpDownIcon className="h-4 w-4 text-neutral-300" />;
+    }
+    return sortConfig.direction === 'asc' ? (
+      <ChevronUpIcon className="h-4 w-4 text-neutral-500" />
+    ) : (
+      <ChevronDownIcon className="h-4 w-4 text-neutral-500" />
+    );
+  };
+  const toggleSort = (field: ApiSortField) => {
+    setSortConfig((prev) => {
+      if (prev.field === field) {
+        return {
+          field,
+          direction: prev.direction === 'asc' ? 'desc' : 'asc',
+        };
+      }
+      return { field, direction: 'desc' };
+    });
+  };
 
   if (authLoading || !isAuthenticated || !token) {
     return null;
@@ -154,8 +201,24 @@ export default function ApiUsagePage() {
                   <TableRow>
                     <TableHead>ID</TableHead>
                     <TableHead>Endpoint</TableHead>
-                    <TableHead>Hit Count</TableHead>
-                    <TableHead>Execution Time (ms)</TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none"
+                      onClick={() => toggleSort('hit_count')}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        Hit Count
+                        {renderSortIcon('hit_count')}
+                      </span>
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer select-none"
+                      onClick={() => toggleSort('execution_time_ms')}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        Execution Time (ms)
+                        {renderSortIcon('execution_time_ms')}
+                      </span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -174,7 +237,7 @@ export default function ApiUsagePage() {
                     </TableRow>
                   )}
                   {!error &&
-                    logs.map((log) => (
+                    sortedLogs.map((log) => (
                       <TableRow key={log.id}>
                         <TableCell className="font-medium text-neutral-900">{log.id}</TableCell>
                         <TableCell>{log.endpoint}</TableCell>
