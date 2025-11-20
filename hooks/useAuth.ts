@@ -8,7 +8,7 @@ import { AuthData } from '@/types';
  * Provides consistent authentication state and user_id access across the app.
  * Syncs with localStorage and listens to storage events for cross-tab sync.
  * 
- * @returns { user, isAuthenticated, userId, isLoading }
+ * @returns { user, isAuthenticated, token, userId, isLoading }
  */
 export function useAuth() {
   const [authData, setAuthData] = useState<AuthData | null>(null);
@@ -61,6 +61,7 @@ export function useAuth() {
   // Compute derived values
   const user = authData?.user || null;
   const isAuthenticated = authData?.isAuthenticated || false;
+  const token = authData?.token || null;
   
   // Convert user.id (string) to number for API calls
   const userId: number | null = user?.id ? parseInt(user.id, 10) : null;
@@ -72,6 +73,7 @@ export function useAuth() {
     user,
     isAuthenticated,
     userId: validUserId,
+    token,
     isLoading,
   };
 }

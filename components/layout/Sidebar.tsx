@@ -8,6 +8,8 @@ import {
   AcademicCapIcon,
   Cog6ToothIcon,
   ChartBarIcon,
+  ServerStackIcon,
+  TableCellsIcon,
 } from '@heroicons/react/24/outline';
 import { Logo } from './Logo';
 import { cn } from '@/lib/utils';
@@ -17,6 +19,8 @@ const navigation = [
   { name: 'Teachers', href: '/teachers', icon: UserGroupIcon },
   { name: 'Students', href: '/students', icon: AcademicCapIcon },
   { name: 'Reports', href: '/reports', icon: ChartBarIcon },
+  { name: 'API Usage', href: '/api-usage', icon: ServerStackIcon },
+  { name: 'DB Table Count', href: '/db-table-count', icon: TableCellsIcon },
   { name: 'Settings', href: '/settings', icon: Cog6ToothIcon },
 ];
 
