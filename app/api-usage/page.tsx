@@ -116,65 +116,71 @@ export default function ApiUsagePage() {
           </Card>
         </div>
 
-        <Card
-          header={
-            <div className="flex w-full flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-base font-semibold text-neutral-900">API Invocation Logs</p>
+        <div className="relative overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+          <div className="border-b border-neutral-200 px-4 pb-3 pt-5">
+            <div className="flex flex-wrap items-center gap-3 md:gap-6">
+              <div className="flex-1 min-w-0">
+                <div className="text-2xl font-semibold text-neutral-900">
+                  API Invocation Logs
+                </div>
                 <p className="text-sm text-neutral-500">
-                  Latest data from <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">/admin/api-logs</code>
+                  Latest data from{' '}
+                  <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">/admin/api-logs</code>
                 </p>
               </div>
-              <Button variant="secondary" size="sm" onClick={fetchApiLogs} loading={loading}>
-                Refresh
-              </Button>
+              <div className="flex w-full justify-start md:w-auto md:justify-end">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={fetchApiLogs}
+                  disabled={loading}
+                  className="w-full md:w-auto"
+                >
+                  Refresh
+                </Button>
+              </div>
             </div>
-          }
-        >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Endpoint</TableHead>
-                <TableHead>Hit Count</TableHead>
-                <TableHead>Execution Time (ms)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-neutral-500">
-                    Fetching latest API usage…
-                  </TableCell>
-                </TableRow>
-              )}
-              {!loading && error && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-danger-600">
-                    {error}
-                  </TableCell>
-                </TableRow>
-              )}
-              {!loading && !error && logs.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center text-neutral-500">
-                    No API activity logged yet.
-                  </TableCell>
-                </TableRow>
-              )}
-              {!loading &&
-                !error &&
-                logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="font-medium text-neutral-900">{log.id}</TableCell>
-                    <TableCell>{log.endpoint}</TableCell>
-                    <TableCell>{log.hit_count.toLocaleString('en-IN')}</TableCell>
-                    <TableCell>{log.execution_time_ms.toFixed(2)}</TableCell>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="max-h-[600px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Endpoint</TableHead>
+                    <TableHead>Hit Count</TableHead>
+                    <TableHead>Execution Time (ms)</TableHead>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {error && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-danger-600">
+                        {error}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!error && logs.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-neutral-500">
+                        No API activity logged yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!error &&
+                    logs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="font-medium text-neutral-900">{log.id}</TableCell>
+                        <TableCell>{log.endpoint}</TableCell>
+                        <TableCell>{log.hit_count.toLocaleString('en-IN')}</TableCell>
+                        <TableCell>{log.execution_time_ms.toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

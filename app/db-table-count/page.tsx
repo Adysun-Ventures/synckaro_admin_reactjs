@@ -118,11 +118,13 @@ export default function DbTableCountPage() {
           </Card>
         </div>
 
-        <Card
-          header={
-            <div className="flex w-full flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-base font-semibold text-neutral-900">Database Table Counts</p>
+        <div className="relative overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
+          <div className="border-b border-neutral-200 px-4 pb-3 pt-5">
+            <div className="flex flex-wrap items-center gap-3 md:gap-6">
+              <div className="flex-1 min-w-0">
+                <div className="text-2xl font-semibold text-neutral-900">
+                  Database Table Counts
+                </div>
                 <p className="text-sm text-neutral-500">
                   Data sourced from{' '}
                   <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">
@@ -130,56 +132,59 @@ export default function DbTableCountPage() {
                   </code>
                 </p>
               </div>
-              <Button variant="secondary" size="sm" onClick={fetchTableCounts} loading={loading}>
-                Refresh
-              </Button>
+              <div className="flex w-full justify-start md:w-auto md:justify-end">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={fetchTableCounts}
+                  disabled={loading}
+                  className="w-full md:w-auto"
+                >
+                  Refresh
+                </Button>
+              </div>
             </div>
-          }
-        >
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Table Name</TableHead>
-                <TableHead className="text-right">Row Count</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={2} className="text-center text-neutral-500">
-                    Loading table counts…
-                  </TableCell>
-                </TableRow>
-              )}
-              {!loading && error && (
-                <TableRow>
-                  <TableCell colSpan={2} className="text-center text-danger-600">
-                    {error}
-                  </TableCell>
-                </TableRow>
-              )}
-              {!loading && !error && tableCounts.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={2} className="text-center text-neutral-500">
-                    No tables found.
-                  </TableCell>
-                </TableRow>
-              )}
-              {!loading &&
-                !error &&
-                tableCounts.map((entry) => (
-                  <TableRow key={entry.table_name}>
-                    <TableCell className="font-medium text-neutral-900">
-                      {entry.table_name}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {entry.count.toLocaleString('en-IN')}
-                    </TableCell>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="max-h-[600px] overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Table Name</TableHead>
+                    <TableHead className="text-right">Row Count</TableHead>
                   </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {error && (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center text-danger-600">
+                        {error}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!error && tableCounts.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center text-neutral-500">
+                        No tables found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!error &&
+                    tableCounts.map((entry) => (
+                      <TableRow key={entry.table_name}>
+                        <TableCell className="font-medium text-neutral-900">
+                          {entry.table_name}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {entry.count.toLocaleString('en-IN')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
